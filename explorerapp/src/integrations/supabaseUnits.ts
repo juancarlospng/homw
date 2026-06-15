@@ -24,15 +24,6 @@ const SUPABASE_PROJECT_REF = "oabwxenpougurdzngyuy";
 const DEFAULT_UNITS_TABLE = "unidades";
 const UNIT_ROW_NAME_COLUMN = "Row Name";
 
-declare global {
-  interface Window {
-    HOMW_EXPLORER_CONFIG?: {
-      supabaseAnonKey?: string;
-      supabaseUnitsTable?: string;
-    };
-  }
-}
-
 export class SupabaseConfigurationError extends Error {
   constructor(message = "Missing Supabase anon key. Add it to explorer-config.js on Hostinger or use VITE_SUPABASE_ANON_KEY before building.") {
     super(message);
