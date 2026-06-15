@@ -1,0 +1,28 @@
+:root {
+  --homw-bg: #08080a;
+  --homw-bg-soft: #0d0d11;
+  --homw-card: rgba(20, 20, 26, 0.82);
+  --homw-glass: rgba(22, 22, 28, 0.56);
+  --homw-text: #f7f6f8;
+  --homw-soft-ink: #f7f6f8;
+  --homw-muted: #b8b5bf;
+  --homw-border: rgba(255, 255, 255, 0.11);
+  --homw-glass-border: rgba(255, 255, 255, 0.17);
+  --homw-purple: #533db3;
+  --homw-purple-hover: #6049c7;
+  --homw-purple-active: #46309f;
+  --homw-purple-soft: rgba(83, 61, 179, 0.14);
+  --homw-purple-border: rgba(83, 61, 179, 0.34);
+  --homw-accent-glow: rgba(83, 61, 179, 0.28);
+  --homw-radius-sm: 10px;
+  --homw-radius-md: 16px;
+  --homw-radius-lg: 24px;
+  --homw-shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.24);
+  --homw-shadow-floating: 0 28px 90px rgba(0, 0, 0, 0.34);
+  --homw-blur-glass: blur(22px);
+  --homw-motion-fast: 160ms ease;
+  --homw-motion-smooth: 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --homw-z-base: 1;
+  --homw-z-hud: 10;
+  --homw-z-nav: 20;
+}
