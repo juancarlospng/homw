@@ -39,6 +39,21 @@ export class SupabaseConfigurationError extends Error {
   }
 }
 
+export class SupabaseRequestError extends Error {
+  status: number;
+
+  constructor(status: number, context: string) {
+    const authMessage =
+      status === 401 || status === 403
+        ? "Supabase rejected the request. Check the anon key in explorer-config.js and the table API permissions."
+        : `Supabase ${context} request failed: ${status}`;
+
+    super(authMessage);
+    this.name = "SupabaseRequestError";
+    this.status = status;
+  }
+}
+
 function getStringValue(record: Record<string, unknown>, keys: string[], fallback = "") {
   for (const key of keys) {
     const value = record[key];
@@ -149,7 +164,7 @@ export async function fetchUnitsFromSupabase() {
   const response = await fetch(url, { headers: getSupabaseHeaders() });
 
   if (!response.ok) {
-    throw new Error(`Supabase units request failed: ${response.status}`);
+    throw new SupabaseRequestError(response.status, "units");
   }
 
   const data = (await response.json()) as Record<string, unknown>[];
@@ -169,7 +184,7 @@ export async function fetchUnitByRowNameFromSupabase(identifier: string) {
   const response = await fetch(url, { headers: getSupabaseHeaders() });
 
   if (!response.ok) {
-    throw new Error(`Supabase unit detail request failed: ${response.status}`);
+    throw new SupabaseRequestError(response.status, "unit detail");
   }
 
   const data = (await response.json()) as Record<string, unknown>[];

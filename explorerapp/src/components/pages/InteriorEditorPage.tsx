@@ -17,6 +17,7 @@ import {
   filterUnits,
   hasSupabaseCredentials,
   SupabaseConfigurationError,
+  SupabaseRequestError,
   type UnitAvailabilityFilter,
   type UnitFilters,
   type UnitRecord,
@@ -159,10 +160,12 @@ export function InteriorEditorPage() {
       })
       .catch((error) => {
         if (cancelled) return;
-        console.warn("[HOMW Units]", error);
+        if (!(error instanceof SupabaseConfigurationError || error instanceof SupabaseRequestError)) {
+          console.warn("[HOMW Units]", error);
+        }
         setUnitsStatus("error");
         setUnitsError(
-          error instanceof SupabaseConfigurationError
+          error instanceof SupabaseConfigurationError || error instanceof SupabaseRequestError
             ? error.message
             : "Could not reach Supabase. Check the anon key, table name and project API permissions.",
         );
