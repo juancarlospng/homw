@@ -173,29 +173,26 @@ function ContactModal({ open, onClose }) {
     setForm((current) => ({ ...current, [name]: value }));
   }
 
-  async function handleSubmit(event) {
+  function handleSubmit(event) {
     event.preventDefault();
     setStatus("sending");
     setMessage("");
 
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+    const subject = `HOMW walkthrough request from ${form.name}`;
+    const body = [
+      "New HOMW walkthrough request",
+      "",
+      `Name: ${form.name}`,
+      `Email: ${form.email}`,
+      `Company: ${form.company || "Not provided"}`,
+      "",
+      "Project details:",
+      form.details,
+    ].join("\n");
 
-      if (!response.ok) {
-        throw new Error("Request failed");
-      }
-
-      setStatus("sent");
-      setMessage("Thanks. We'll get back to you shortly.");
-      setForm({ name: "", email: "", company: "", details: "" });
-    } catch (error) {
-      setStatus("error");
-      setMessage("We could not send the request. Please try again in a moment.");
-    }
+    window.location.href = `mailto:info@woehm.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setStatus("sent");
+    setMessage("Your email app is opening with the request ready to send.");
   }
 
   return (
