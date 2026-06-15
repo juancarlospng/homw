@@ -15,6 +15,7 @@ import {
   fetchUnitsFromSupabase,
   findUnitByIdentifier,
   filterUnits,
+  getSupabaseCredentialsError,
   hasSupabaseCredentials,
   SupabaseConfigurationError,
   SupabaseRequestError,
@@ -146,7 +147,7 @@ export function InteriorEditorPage() {
 
     if (!hasSupabaseCredentials()) {
       setUnitsStatus("error");
-      setUnitsError("Add the Supabase anon key in explorer-config.js on Hostinger.");
+      setUnitsError(getSupabaseCredentialsError());
       return;
     }
 

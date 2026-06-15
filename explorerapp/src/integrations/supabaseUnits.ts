@@ -118,6 +118,12 @@ function decodeJwtPayload(token: string) {
 }
 
 function validateSupabaseToken(token: string) {
+  if (/^https?:\/\//i.test(token)) {
+    throw new SupabaseConfigurationError(
+      "explorer-config.js has a Supabase URL in supabaseAnonKey. Paste the anon public key there; it starts with eyJ.",
+    );
+  }
+
   const payload = decodeJwtPayload(token);
 
   if (!payload) {
@@ -146,6 +152,21 @@ export function hasSupabaseCredentials() {
     return true;
   } catch {
     return false;
+  }
+}
+
+export function getSupabaseCredentialsError() {
+  const token = getSupabaseToken();
+
+  if (!token) {
+    return "Add the Supabase anon key in explorer-config.js on Hostinger.";
+  }
+
+  try {
+    validateSupabaseToken(token);
+    return "";
+  } catch (error) {
+    return error instanceof Error ? error.message : "Check the Supabase anon key in explorer-config.js.";
   }
 }
 
