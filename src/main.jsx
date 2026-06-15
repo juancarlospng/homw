@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const DEMO_URL = "#demo"; // Replace with the final live demo URL when available.
+const DEMO_URL = "/explorerapp/";
 
 const imagePath = (name) => `/images/homw/${name}.png`;
 
