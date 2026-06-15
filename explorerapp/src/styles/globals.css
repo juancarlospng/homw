@@ -5,7 +5,9 @@
 html,
 body,
 #root {
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -27,13 +29,14 @@ button {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100dvh;
   background: var(--homw-bg);
+  overflow: hidden;
 }
 
 .tour-page {
   position: relative;
-  min-height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -284,18 +287,30 @@ button {
   position: relative;
   z-index: var(--homw-z-hud);
   display: grid;
-  min-height: 100vh;
-  grid-template-columns: minmax(260px, 340px) 1fr minmax(280px, 360px);
-  gap: 18px;
-  padding: 104px 20px 112px;
+  height: 100dvh;
+  min-height: 0;
+  grid-template-columns: clamp(270px, 23vw, 330px) minmax(260px, 1fr) clamp(250px, 22vw, 320px);
+  gap: clamp(10px, 1.2vw, 18px);
+  padding: clamp(84px, 10vh, 104px) clamp(12px, 1.4vw, 20px) clamp(76px, 9vh, 104px);
   pointer-events: none;
 }
 
 .hud-column {
   display: flex;
+  min-height: 0;
+  max-height: 100%;
   flex-direction: column;
-  gap: 14px;
+  gap: clamp(8px, 1vh, 12px);
+  overflow-x: hidden;
+  overflow-y: auto;
   pointer-events: auto;
+  scrollbar-width: none;
+}
+
+.hud-column::-webkit-scrollbar,
+.unit-result-list::-webkit-scrollbar,
+.unit-detail-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .hud-column.right {
@@ -304,7 +319,7 @@ button {
 
 .center-stage {
   position: relative;
-  min-height: 420px;
+  min-height: 0;
   pointer-events: none;
 }
 
@@ -326,11 +341,11 @@ button {
 }
 
 .panel-inner {
-  padding: 18px;
+  padding: clamp(12px, 1.4vw, 16px);
 }
 
 .panel-kicker {
-  margin: 0 0 7px;
+  margin: 0 0 5px;
   color: var(--homw-muted);
   font-size: 11px;
   font-weight: 800;
@@ -341,12 +356,12 @@ button {
 .panel-title {
   margin: 0;
   color: var(--homw-text);
-  font-size: 18px;
+  font-size: clamp(15px, 1.25vw, 17px);
   line-height: 1.12;
 }
 
 .panel-copy {
-  margin: 8px 0 0;
+  margin: 7px 0 0;
   color: var(--homw-muted);
   font-size: 13px;
   line-height: 1.45;
@@ -420,8 +435,8 @@ button {
 .mood-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .mood-button {
@@ -440,8 +455,8 @@ button {
 .mood-icon {
   position: relative;
   display: grid;
-  width: 70px;
-  height: 66px;
+  width: min(62px, 100%);
+  height: clamp(48px, 6vh, 58px);
   place-items: center;
   border: 1px solid var(--homw-glass-border);
   border-radius: 10px;
@@ -507,7 +522,7 @@ button {
 }
 
 .time-slider-wrap {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .time-slider {
@@ -644,12 +659,12 @@ button {
 .unit-filter-panel .panel-inner,
 .unit-detail-panel .panel-inner {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .filter-control {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .filter-control.two-column {
@@ -685,7 +700,7 @@ button {
 }
 
 .filter-pill {
-  min-height: 36px;
+  min-height: 32px;
   padding: 0 8px;
   border: 1px solid var(--homw-border);
   border-radius: 999px;
@@ -732,15 +747,15 @@ button {
 
 .unit-result-list {
   display: grid;
-  gap: 8px;
-  max-height: 270px;
+  gap: 6px;
+  max-height: clamp(118px, 18vh, 210px);
   overflow: auto;
   padding-right: 2px;
 }
 
 .unit-result-button {
   display: flex;
-  min-height: 58px;
+  min-height: 50px;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -790,7 +805,7 @@ button {
 .unit-detail-grid {
   display: grid;
   gap: 9px;
-  max-height: 320px;
+  max-height: clamp(180px, 34vh, 300px);
   overflow: auto;
   padding: 12px;
   border: 1px solid var(--homw-border);
@@ -835,8 +850,8 @@ button {
 
 .score-ring {
   display: grid;
-  width: 78px;
-  height: 78px;
+  width: 66px;
+  height: 66px;
   flex: 0 0 auto;
   place-items: center;
   border-radius: 50%;
@@ -845,8 +860,8 @@ button {
 
 .score-ring span {
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: 50px;
+  height: 50px;
   place-items: center;
   border-radius: 50%;
   background: rgba(15, 15, 20, 0.92);
@@ -1125,12 +1140,13 @@ button {
   }
 
   .hud-grid {
-    grid-template-columns: 1fr;
-    padding-top: 92px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    padding: 126px 12px 96px;
   }
 
   .center-stage {
-    min-height: 28vh;
+    display: none;
   }
 
   .hud-column.right {
@@ -1149,12 +1165,8 @@ button {
 }
 
 @media (max-width: 680px) {
-  .tour-page {
-    overflow-y: auto;
-  }
-
   .hud-grid {
-    padding: 88px 12px 210px;
+    padding: 132px 10px 96px;
   }
 
   .tour-topbar,
@@ -1189,8 +1201,8 @@ button {
   }
 
   .mood-icon {
-    width: 58px;
-    height: 56px;
+    width: 52px;
+    height: 48px;
   }
 
   .journey-step {

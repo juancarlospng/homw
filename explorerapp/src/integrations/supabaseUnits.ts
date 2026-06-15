@@ -23,6 +23,13 @@ const SUPABASE_BASE_URL = "https://oabwxenpougurdzngyuy.supabase.co/rest/v1";
 const DEFAULT_UNITS_TABLE = "unidades";
 const UNIT_ROW_NAME_COLUMN = "Row Name";
 
+export class SupabaseConfigurationError extends Error {
+  constructor() {
+    super("Missing VITE_SUPABASE_ANON_KEY. Add it to explorerapp/.env.local or to the deployment environment.");
+    this.name = "SupabaseConfigurationError";
+  }
+}
+
 function getStringValue(record: Record<string, unknown>, keys: string[], fallback = "") {
   for (const key of keys) {
     const value = record[key];
@@ -84,6 +91,19 @@ export function hasSupabaseCredentials() {
   return Boolean(getSupabaseToken());
 }
 
+function getSupabaseHeaders(): HeadersInit {
+  const token = getSupabaseToken();
+
+  if (!token) {
+    throw new SupabaseConfigurationError();
+  }
+
+  return {
+    apikey: token,
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 function getUnitsTable() {
   const params = new URLSearchParams(window.location.search);
   return params.get("supabaseUnitsTable") ?? import.meta.env.VITE_SUPABASE_UNITS_TABLE ?? DEFAULT_UNITS_TABLE;
@@ -109,17 +129,9 @@ function normalizeUnit(record: Record<string, unknown>, index: number): UnitReco
 }
 
 export async function fetchUnitsFromSupabase() {
-  const token = getSupabaseToken();
   const table = getUnitsTable();
   const url = `${SUPABASE_BASE_URL}/${encodeURIComponent(table)}?select=*`;
-  const headers: HeadersInit = token
-    ? {
-        apikey: token,
-        Authorization: `Bearer ${token}`,
-      }
-    : {};
-
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, { headers: getSupabaseHeaders() });
 
   if (!response.ok) {
     throw new Error(`Supabase units request failed: ${response.status}`);
@@ -130,7 +142,6 @@ export async function fetchUnitsFromSupabase() {
 }
 
 export async function fetchUnitByRowNameFromSupabase(identifier: string) {
-  const token = getSupabaseToken();
   const table = getUnitsTable();
   const rowName = getUnitRowNameFilterValue(identifier);
   const params = new URLSearchParams({
@@ -138,16 +149,9 @@ export async function fetchUnitByRowNameFromSupabase(identifier: string) {
     [UNIT_ROW_NAME_COLUMN]: `eq.${rowName}`,
   });
   const url = `${SUPABASE_BASE_URL}/${encodeURIComponent(table)}?${params.toString()}`;
-  const headers: HeadersInit = token
-    ? {
-        apikey: token,
-        Authorization: `Bearer ${token}`,
-      }
-    : {};
-
   console.info("[HOMW Supabase] Unit detail query", url);
 
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, { headers: getSupabaseHeaders() });
 
   if (!response.ok) {
     throw new Error(`Supabase unit detail request failed: ${response.status}`);

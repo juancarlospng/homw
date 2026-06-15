@@ -16,6 +16,7 @@ import {
   findUnitByIdentifier,
   filterUnits,
   hasSupabaseCredentials,
+  SupabaseConfigurationError,
   type UnitAvailabilityFilter,
   type UnitFilters,
   type UnitRecord,
@@ -109,6 +110,7 @@ export function InteriorEditorPage() {
   const [units, setUnits] = useState<UnitRecord[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<UnitRecord | null>(null);
   const [unitsStatus, setUnitsStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [unitsError, setUnitsError] = useState("");
   const [selectedUnitStatus, setSelectedUnitStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [dismissedUnitResponse, setDismissedUnitResponse] = useState<string | null>(null);
   const [activeJourney, setActiveJourney] = useState<(typeof journeySteps)[number]>("Explore");
@@ -141,7 +143,14 @@ export function InteriorEditorPage() {
 
     let cancelled = false;
 
+    if (!hasSupabaseCredentials()) {
+      setUnitsStatus("error");
+      setUnitsError("Add VITE_SUPABASE_ANON_KEY in explorerapp/.env.local or in Vercel environment variables.");
+      return;
+    }
+
     setUnitsStatus("loading");
+    setUnitsError("");
     fetchUnitsFromSupabase()
       .then((nextUnits) => {
         if (cancelled) return;
@@ -152,6 +161,11 @@ export function InteriorEditorPage() {
         if (cancelled) return;
         console.warn("[HOMW Units]", error);
         setUnitsStatus("error");
+        setUnitsError(
+          error instanceof SupabaseConfigurationError
+            ? error.message
+            : "Could not reach Supabase. Check the anon key, table name and project API permissions.",
+        );
       });
 
     return () => {
@@ -577,7 +591,7 @@ export function InteriorEditorPage() {
                 <div className="unit-result-list">
                   {unitsStatus === "loading" ? <p className="panel-copy">Loading units...</p> : null}
                   {unitsStatus === "error" ? (
-                    <p className="panel-copy">Supabase units are unavailable. Unreal filters are still being sent.</p>
+                    <p className="panel-copy">{unitsError}</p>
                   ) : null}
                   {unitsStatus === "ready" && filteredUnits.length === 0 ? (
                     <p className="panel-copy">No units match the current filters.</p>
