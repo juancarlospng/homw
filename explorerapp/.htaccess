@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteRule ^$ /dist/explorerapp/ [R=302,L]
+RewriteRule ^index\.html$ /dist/explorerapp/ [R=302,L]
