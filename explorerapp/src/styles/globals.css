@@ -289,9 +289,9 @@ button {
   display: grid;
   height: 100dvh;
   min-height: 0;
-  grid-template-columns: clamp(270px, 23vw, 330px) minmax(260px, 1fr) clamp(250px, 22vw, 320px);
-  gap: clamp(10px, 1.2vw, 18px);
-  padding: clamp(84px, 10vh, 104px) clamp(12px, 1.4vw, 20px) clamp(76px, 9vh, 104px);
+  grid-template-columns: clamp(260px, 22vw, 330px) minmax(260px, 1fr) clamp(240px, 20vw, 320px);
+  gap: clamp(8px, 1vw, 16px);
+  padding: clamp(84px, 9vh, 96px) clamp(12px, 1.4vw, 20px) clamp(86px, 10vh, 106px);
   pointer-events: none;
 }
 
@@ -300,7 +300,7 @@ button {
   min-height: 0;
   max-height: 100%;
   flex-direction: column;
-  gap: clamp(8px, 1vh, 12px);
+  gap: clamp(7px, 0.9vh, 11px);
   overflow-x: hidden;
   overflow-y: auto;
   pointer-events: auto;
@@ -341,7 +341,7 @@ button {
 }
 
 .panel-inner {
-  padding: clamp(12px, 1.4vw, 16px);
+  padding: clamp(11px, 1.2vw, 15px);
 }
 
 .panel-kicker {
@@ -356,14 +356,14 @@ button {
 .panel-title {
   margin: 0;
   color: var(--homw-text);
-  font-size: clamp(15px, 1.25vw, 17px);
+  font-size: clamp(14px, 1.2vw, 17px);
   line-height: 1.12;
 }
 
 .panel-copy {
   margin: 7px 0 0;
   color: var(--homw-muted);
-  font-size: 13px;
+  font-size: clamp(12px, 1vw, 13px);
   line-height: 1.45;
 }
 
@@ -455,8 +455,8 @@ button {
 .mood-icon {
   position: relative;
   display: grid;
-  width: min(62px, 100%);
-  height: clamp(48px, 6vh, 58px);
+  width: min(58px, 100%);
+  height: clamp(44px, 5.5vh, 56px);
   place-items: center;
   border: 1px solid var(--homw-glass-border);
   border-radius: 10px;
@@ -522,7 +522,7 @@ button {
 }
 
 .time-slider-wrap {
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .time-slider {
@@ -635,13 +635,13 @@ button {
 
 .unit-snapshot {
   display: grid;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .unit-snapshot span {
   display: flex;
-  min-height: 42px;
+  min-height: 36px;
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
@@ -653,7 +653,7 @@ button {
 
 .unit-snapshot strong {
   color: var(--homw-purple);
-  font-size: 18px;
+  font-size: 17px;
 }
 
 .unit-filter-panel .panel-inner,
@@ -1161,6 +1161,53 @@ button {
 
   .journey-steps {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-height: 820px) and (min-width: 681px) {
+  .hud-grid {
+    padding-top: 86px;
+    padding-bottom: 76px;
+  }
+
+  .panel-inner {
+    padding: 11px 14px;
+  }
+
+  .panel-kicker {
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .panel-title {
+    font-size: 15px;
+  }
+
+  .mood-grid {
+    gap: 7px;
+    margin-top: 8px;
+  }
+
+  .mood-icon {
+    height: 42px;
+  }
+
+  .time-slider-wrap {
+    margin-top: 8px;
+  }
+
+  .unit-snapshot {
+    gap: 7px;
+    margin-top: 8px;
+  }
+
+  .unit-snapshot span {
+    min-height: 34px;
+  }
+
+  .movement-guide,
+  .look-action-panel {
+    bottom: 12px;
   }
 }
 

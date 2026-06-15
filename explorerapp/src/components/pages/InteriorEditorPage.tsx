@@ -410,7 +410,7 @@ export function InteriorEditorPage() {
 
   return (
     <div
-      className="tour-page"
+      className={`tour-page ${currentScreen === "explorer" ? "is-explorer" : "is-tour"}`}
       style={{ "--scene-image": `url(${interiorImage})` } as CSSProperties}
     >
       <div className="tour-scene" aria-hidden="true" />
@@ -793,22 +793,22 @@ export function InteriorEditorPage() {
         </div>
       </div>
 
+      <aside className="movement-guide" aria-label="Movement guide">
+        <div className="key-cluster" aria-hidden="true">
+          <span>W</span>
+          <span>A</span>
+          <span>S</span>
+          <span>D</span>
+        </div>
+        <div>
+          <strong>{isTourScreen ? "Walk" : "Explore"}</strong>
+          <span>Mouse to look</span>
+        </div>
+        <span className="mouse-guide" aria-hidden="true" />
+      </aside>
+
       {isTourScreen ? (
         <>
-          <aside className="movement-guide" aria-label="Movement guide">
-            <div className="key-cluster" aria-hidden="true">
-              <span>W</span>
-              <span>A</span>
-              <span>S</span>
-              <span>D</span>
-            </div>
-            <div>
-              <strong>Walk</strong>
-              <span>Mouse to look</span>
-            </div>
-            <span className="mouse-guide" aria-hidden="true" />
-          </aside>
-
           <aside className="look-action-panel" aria-label="Look actions">
             <button className="save-look-button" onClick={saveLook} type="button">
               <span>Save Look</span>
