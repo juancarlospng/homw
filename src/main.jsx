@@ -14,7 +14,6 @@ import {
 import "./styles.css";
 
 const DEMO_URL = "#demo"; // Replace with the final live demo URL when available.
-const WALKTHROUGH_URL = "mailto:info@blueether.ch?subject=HOMW%20private%20walkthrough";
 
 const imagePath = (name) => `/images/homw/${name}.png`;
 
@@ -120,12 +119,125 @@ function HomwIcon({ icon: Icon, className = "" }) {
   return <Icon className={className} size={20} strokeWidth={1.6} absoluteStrokeWidth aria-hidden="true" />;
 }
 
-function HomwButton({ children, href, variant = "primary", icon: Icon }) {
+function HomwButton({ children, href, variant = "primary", icon: Icon, onClick }) {
+  const className = `homw-button homw-button-${variant}`;
+
+  if (onClick) {
+    return (
+      <button className={className} type="button" onClick={onClick}>
+        <span>{children}</span>
+        {Icon && <Icon size={18} strokeWidth={1.7} absoluteStrokeWidth aria-hidden="true" />}
+      </button>
+    );
+  }
+
   return (
-    <a className={`homw-button homw-button-${variant}`} href={href}>
+    <a className={className} href={href}>
       <span>{children}</span>
       {Icon && <Icon size={18} strokeWidth={1.7} absoluteStrokeWidth aria-hidden="true" />}
     </a>
+  );
+}
+
+function ContactModal({ open, onClose }) {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    company: "",
+    details: "",
+  });
+  const [status, setStatus] = useState("idle");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.body.classList.add("modal-open");
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.classList.remove("modal-open");
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  function updateField(event) {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setStatus("sending");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+
+      setStatus("sent");
+      setMessage("Thanks. We'll get back to you shortly.");
+      setForm({ name: "", email: "", company: "", details: "" });
+    } catch (error) {
+      setStatus("error");
+      setMessage("We could not send the request. Please try again in a moment.");
+    }
+  }
+
+  return (
+    <div className="contact-modal-layer" role="presentation" onMouseDown={onClose}>
+      <section
+        className="contact-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="contact-modal-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <button className="contact-modal-close" type="button" aria-label="Close contact form" onClick={onClose}>
+          <X size={20} strokeWidth={1.7} absoluteStrokeWidth aria-hidden="true" />
+        </button>
+        <p className="contact-modal-kicker">Request a Walkthrough</p>
+        <h2 id="contact-modal-title">See what HOMW can do for your development.</h2>
+        <p className="contact-modal-lead">Tell us about your project. We'll arrange a private session.</p>
+
+        <form className="contact-form" onSubmit={handleSubmit}>
+          <label>
+            Name <span>*</span>
+            <input name="name" value={form.name} onChange={updateField} required autoFocus />
+          </label>
+          <label>
+            Email <span>*</span>
+            <input name="email" type="email" value={form.email} onChange={updateField} required />
+          </label>
+          <label>
+            Company
+            <input name="company" value={form.company} onChange={updateField} />
+          </label>
+          <label>
+            Project details <span>*</span>
+            <textarea name="details" value={form.details} onChange={updateField} required rows={5} />
+          </label>
+          {message && <p className={`contact-form-message ${status}`}>{message}</p>}
+          <button className="contact-submit" type="submit" disabled={status === "sending"}>
+            {status === "sending" ? "Sending..." : "Send request"}
+          </button>
+        </form>
+      </section>
+    </div>
   );
 }
 
@@ -135,6 +247,14 @@ function StatusIndicator({ children }) {
       <span aria-hidden="true" />
       {children}
     </span>
+  );
+}
+
+function Wordmark() {
+  return (
+    <a className="wordmark" href="#top" aria-label="HOMW home">
+      <img src="/logohomw-wordmark.png" alt="" aria-hidden="true" />
+    </a>
   );
 }
 
@@ -166,19 +286,43 @@ function useScrollReveal() {
 
 function Navigation() {
   const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    function handleScroll() {
+      const currentScrollY = window.scrollY;
+
+      if (open) {
+        setHidden(false);
+        lastScrollY = currentScrollY;
+        return;
+      }
+
+      if (currentScrollY < 24) {
+        setHidden(false);
+      } else if (currentScrollY > lastScrollY + 8) {
+        setHidden(true);
+      } else if (currentScrollY < lastScrollY - 8) {
+        setHidden(false);
+      }
+
+      lastScrollY = currentScrollY;
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [open]);
 
   return (
     <header className="site-header">
-      <nav className="nav homw-glass-secondary" aria-label="Primary navigation">
-        <a className="wordmark" href="#top" aria-label="HOMW home">
-          <span className="wordmark-mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-          </span>
-          HOMW
-        </a>
+      <nav className={`nav homw-glass-secondary ${hidden ? "is-hidden" : ""}`} aria-label="Primary navigation">
+        <Wordmark />
 
         <div className="nav-links">
           {navLinks.map((link) => (
@@ -391,7 +535,7 @@ function ImageGallery() {
   );
 }
 
-function DemoShowcase() {
+function DemoShowcase({ onContactOpen }) {
   return (
     <section className="section demo-section" id="demo">
       <div className="page-shell">
@@ -409,7 +553,7 @@ function DemoShowcase() {
               <HomwButton href={DEMO_URL} icon={ArrowUpRight}>
                 Launch Live Demo
               </HomwButton>
-              <HomwButton href={WALKTHROUGH_URL} variant="glass">
+              <HomwButton variant="glass" onClick={onContactOpen}>
                 Request a Private Walkthrough
               </HomwButton>
             </div>
@@ -455,7 +599,7 @@ function DemoShowcase() {
   );
 }
 
-function FinalCTA() {
+function FinalCTA({ onContactOpen }) {
   return (
     <section className="final-cta">
       <img
@@ -473,7 +617,7 @@ function FinalCTA() {
           <HomwButton href={DEMO_URL} icon={ArrowRight}>
             Experience HOMW
           </HomwButton>
-          <HomwButton href={WALKTHROUGH_URL} variant="glass">
+          <HomwButton variant="glass" onClick={onContactOpen}>
             Build a project with us
           </HomwButton>
         </div>
@@ -482,30 +626,22 @@ function FinalCTA() {
   );
 }
 
-function Footer() {
+function Footer({ onContactOpen }) {
   const year = new Date().getFullYear();
 
   return (
     <footer className="footer">
       <div className="page-shell footer-inner">
-        <a className="wordmark" href="#top" aria-label="HOMW home">
-          <span className="wordmark-mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-          </span>
-          HOMW
-        </a>
+        <Wordmark />
         <div className="footer-links">
           {navLinks.map((link) => (
             <a key={link.href} href={link.href}>
               {link.label}
             </a>
           ))}
-          <a href={WALKTHROUGH_URL}>Contact</a>
-          <a href="#top">Privacy</a>
-          <a href="#top">LinkedIn</a>
+          <button type="button" onClick={onContactOpen}>
+            Contact
+          </button>
         </div>
         <p>© {year} HOMW · Powered by Blueether</p>
       </div>
@@ -515,6 +651,7 @@ function Footer() {
 
 function App() {
   useScrollReveal();
+  const [contactOpen, setContactOpen] = useState(false);
 
   return (
     <div className="app">
@@ -524,10 +661,11 @@ function App() {
         <PropositionSection />
         <ProcessSection />
         <AudienceSection />
-        <DemoShowcase />
-        <FinalCTA />
+        <DemoShowcase onContactOpen={() => setContactOpen(true)} />
+        <FinalCTA onContactOpen={() => setContactOpen(true)} />
       </main>
-      <Footer />
+      <Footer onContactOpen={() => setContactOpen(true)} />
+      <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
     </div>
   );
 }
