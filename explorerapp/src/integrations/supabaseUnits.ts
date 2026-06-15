@@ -20,6 +20,7 @@ export type UnitRecord = {
 };
 
 const SUPABASE_BASE_URL = "https://oabwxenpougurdzngyuy.supabase.co/rest/v1";
+const SUPABASE_PROJECT_REF = "oabwxenpougurdzngyuy";
 const DEFAULT_UNITS_TABLE = "unidades";
 const UNIT_ROW_NAME_COLUMN = "Row Name";
 
@@ -33,8 +34,8 @@ declare global {
 }
 
 export class SupabaseConfigurationError extends Error {
-  constructor() {
-    super("Missing Supabase anon key. Add it to explorer-config.js on Hostinger or use VITE_SUPABASE_ANON_KEY before building.");
+  constructor(message = "Missing Supabase anon key. Add it to explorer-config.js on Hostinger or use VITE_SUPABASE_ANON_KEY before building.") {
+    super(message);
     this.name = "SupabaseConfigurationError";
   }
 }
@@ -112,8 +113,49 @@ function getSupabaseToken() {
   return token.replace(/^Bearer\s+/i, "").trim();
 }
 
+function decodeJwtPayload(token: string) {
+  const payload = token.split(".")[1];
+  if (!payload) return undefined;
+
+  try {
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, "=");
+    return JSON.parse(window.atob(paddedPayload)) as { ref?: string; role?: string };
+  } catch {
+    return undefined;
+  }
+}
+
+function validateSupabaseToken(token: string) {
+  const payload = decodeJwtPayload(token);
+
+  if (!payload) {
+    throw new SupabaseConfigurationError(
+      "The Supabase anon key in explorer-config.js is not a valid JWT. It should start with eyJ.",
+    );
+  }
+
+  if (payload.ref && payload.ref !== SUPABASE_PROJECT_REF) {
+    throw new SupabaseConfigurationError(
+      `The Supabase anon key belongs to project ${payload.ref}, but this app calls ${SUPABASE_PROJECT_REF}.`,
+    );
+  }
+
+  if (payload.role && payload.role !== "anon") {
+    throw new SupabaseConfigurationError("Use the Supabase anon public key, not the service_role key.");
+  }
+}
+
 export function hasSupabaseCredentials() {
-  return Boolean(getSupabaseToken());
+  const token = getSupabaseToken();
+  if (!token) return false;
+
+  try {
+    validateSupabaseToken(token);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function getSupabaseHeaders(): HeadersInit {
@@ -122,6 +164,8 @@ function getSupabaseHeaders(): HeadersInit {
   if (!token) {
     throw new SupabaseConfigurationError();
   }
+
+  validateSupabaseToken(token);
 
   return {
     apikey: token,
