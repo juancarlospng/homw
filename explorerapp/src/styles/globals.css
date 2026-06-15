@@ -437,11 +437,12 @@ button {
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: 10px;
+  align-items: start;
 }
 
 .mood-button {
   display: grid;
-  gap: 9px;
+  gap: 7px;
   min-width: 0;
   justify-items: center;
   border: 0;
@@ -455,14 +456,23 @@ button {
 .mood-icon {
   position: relative;
   display: grid;
-  width: min(58px, 100%);
-  height: clamp(44px, 5.5vh, 56px);
+  width: clamp(52px, 5.6vw, 60px);
+  height: clamp(52px, 5.6vw, 60px);
   place-items: center;
   border: 1px solid var(--homw-glass-border);
   border-radius: 10px;
   background: rgba(18, 18, 23, 0.46);
   color: white;
   transition: background var(--homw-motion-fast), transform var(--homw-motion-fast);
+}
+
+.mood-button > span:last-child {
+  max-width: 100%;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .mood-button:hover .mood-icon {
@@ -938,12 +948,12 @@ button {
   position: fixed;
   z-index: var(--homw-z-nav);
   left: 20px;
-  bottom: 20px;
+  bottom: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
   max-width: 250px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border: 1px solid var(--homw-glass-border);
   border-radius: 18px;
   background: rgba(14, 14, 18, 0.64);
@@ -954,8 +964,8 @@ button {
 
 .key-cluster {
   display: grid;
-  grid-template-columns: repeat(3, 20px);
-  grid-template-rows: repeat(2, 20px);
+  grid-template-columns: repeat(3, 18px);
+  grid-template-rows: repeat(2, 18px);
   gap: 3px;
 }
 
@@ -1028,7 +1038,7 @@ button {
   position: fixed;
   z-index: calc(var(--homw-z-nav) + 1);
   right: 20px;
-  bottom: 20px;
+  bottom: 10px;
   width: 220px;
   padding: 12px;
   border: 1px solid var(--homw-glass-border);
@@ -1190,7 +1200,8 @@ button {
   }
 
   .mood-icon {
-    height: 42px;
+    width: 52px;
+    height: 52px;
   }
 
   .time-slider-wrap {
@@ -1208,7 +1219,7 @@ button {
 
   .movement-guide,
   .look-action-panel {
-    bottom: 12px;
+    bottom: 8px;
   }
 
   .unit-result-list {
@@ -1254,7 +1265,7 @@ button {
 
   .mood-icon {
     width: 52px;
-    height: 48px;
+    height: 52px;
   }
 
   .journey-step {
