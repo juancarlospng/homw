@@ -145,7 +145,7 @@ export function InteriorEditorPage() {
 
     if (!hasSupabaseCredentials()) {
       setUnitsStatus("error");
-      setUnitsError("Add VITE_SUPABASE_ANON_KEY in explorerapp/.env.local or in Vercel environment variables.");
+      setUnitsError("Add the Supabase anon key in explorer-config.js on Hostinger.");
       return;
     }
 

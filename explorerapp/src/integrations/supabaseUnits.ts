@@ -23,9 +23,18 @@ const SUPABASE_BASE_URL = "https://oabwxenpougurdzngyuy.supabase.co/rest/v1";
 const DEFAULT_UNITS_TABLE = "unidades";
 const UNIT_ROW_NAME_COLUMN = "Row Name";
 
+declare global {
+  interface Window {
+    HOMW_EXPLORER_CONFIG?: {
+      supabaseAnonKey?: string;
+      supabaseUnitsTable?: string;
+    };
+  }
+}
+
 export class SupabaseConfigurationError extends Error {
   constructor() {
-    super("Missing VITE_SUPABASE_ANON_KEY. Add it to explorerapp/.env.local or to the deployment environment.");
+    super("Missing Supabase anon key. Add it to explorer-config.js on Hostinger or use VITE_SUPABASE_ANON_KEY before building.");
     this.name = "SupabaseConfigurationError";
   }
 }
@@ -80,6 +89,7 @@ function getSupabaseToken() {
   const token = (
     params.get("supabaseToken") ??
     params.get("token") ??
+    window.HOMW_EXPLORER_CONFIG?.supabaseAnonKey ??
     import.meta.env.VITE_SUPABASE_ANON_KEY ??
     ""
   );
@@ -106,7 +116,12 @@ function getSupabaseHeaders(): HeadersInit {
 
 function getUnitsTable() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("supabaseUnitsTable") ?? import.meta.env.VITE_SUPABASE_UNITS_TABLE ?? DEFAULT_UNITS_TABLE;
+  return (
+    params.get("supabaseUnitsTable") ??
+    window.HOMW_EXPLORER_CONFIG?.supabaseUnitsTable ??
+    import.meta.env.VITE_SUPABASE_UNITS_TABLE ??
+    DEFAULT_UNITS_TABLE
+  );
 }
 
 function normalizeUnit(record: Record<string, unknown>, index: number): UnitRecord {
