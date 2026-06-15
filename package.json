@@ -4,8 +4,9 @@
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build && npm run build:explorerapp",
+    "build": "node scripts/restore-source-indexes.cjs && vite build && npm run build:explorerapp && npm run sync:static",
     "build:explorerapp": "npm --prefix explorerapp ci && npm --prefix explorerapp run build && node scripts/copy-explorerapp.cjs",
+    "sync:static": "node scripts/sync-static-hostinger.cjs",
     "preview": "vite preview --host 127.0.0.1",
     "serve": "node scripts/serve-dist.cjs"
   },
