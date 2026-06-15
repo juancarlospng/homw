@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteRule ^images/(.*)$ /public/images/$1 [L]
+RewriteRule ^(homw-logo\.svg|logohomw-wordmark\.png|logohomw\.png)$ /public/$1 [L]

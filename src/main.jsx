@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const DEMO_URL = "/dist/explorerapp/";
+const DEMO_URL = "/explorerapp/";
 
 const imagePath = (name) => `/images/homw/${name}.png`;
 
