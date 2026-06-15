@@ -1,4 +1,4 @@
 window.HOMW_EXPLORER_CONFIG = {
-  supabaseAnonKey: "",
+  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hYnd4ZW5wb3VndXJkem5neXV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2Mjc4MzIsImV4cCI6MjA4ODIwMzgzMn0.pUZ6ZXXUKraZfMynhX6a-f3_qL-L_qieurtyEVUZUT4",
   supabaseUnitsTable: "unidades",
 };
