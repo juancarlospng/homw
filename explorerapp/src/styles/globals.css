@@ -307,20 +307,6 @@ button {
   scrollbar-width: none;
 }
 
-.tour-page.is-explorer .hud-column:first-child {
-  height: 100%;
-}
-
-.tour-page.is-explorer .unit-filter-panel {
-  flex: 1 0 auto;
-  min-height: calc(100dvh - clamp(84px, 9vh, 96px) - clamp(86px, 10vh, 106px));
-}
-
-.tour-page.is-explorer .unit-filter-panel .panel-inner {
-  grid-template-rows: auto auto auto auto auto auto minmax(150px, 1fr);
-  height: 100%;
-}
-
 .hud-column::-webkit-scrollbar,
 .unit-result-list::-webkit-scrollbar,
 .unit-detail-grid::-webkit-scrollbar {
@@ -762,7 +748,7 @@ button {
 .unit-result-list {
   display: grid;
   gap: 6px;
-  max-height: none;
+  max-height: clamp(160px, 30vh, 260px);
   align-content: start;
   overflow: auto;
   padding-right: 2px;
@@ -1225,8 +1211,8 @@ button {
     bottom: 12px;
   }
 
-  .tour-page.is-explorer .unit-filter-panel {
-    min-height: calc(100dvh - 86px - 76px);
+  .unit-result-list {
+    max-height: clamp(130px, 24vh, 190px);
   }
 }
 

@@ -217,7 +217,7 @@ function normalizeUnit(record: Record<string, unknown>, index: number): UnitReco
 export async function fetchUnitsFromSupabase() {
   const table = getUnitsTable();
   const url = `${SUPABASE_BASE_URL}/${encodeURIComponent(table)}?select=*`;
-  const response = await fetch(url, { headers: getSupabaseHeaders() });
+  const response = await fetch(url, { headers: getSupabaseHeaders(), cache: "no-store" });
 
   if (!response.ok) {
     throw new SupabaseRequestError(response.status, "units");
@@ -237,7 +237,7 @@ export async function fetchUnitByRowNameFromSupabase(identifier: string) {
   const url = `${SUPABASE_BASE_URL}/${encodeURIComponent(table)}?${params.toString()}`;
   console.info("[HOMW Supabase] Unit detail query", url);
 
-  const response = await fetch(url, { headers: getSupabaseHeaders() });
+  const response = await fetch(url, { headers: getSupabaseHeaders(), cache: "no-store" });
 
   if (!response.ok) {
     throw new SupabaseRequestError(response.status, "unit detail");

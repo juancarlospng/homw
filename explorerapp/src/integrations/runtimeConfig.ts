@@ -51,11 +51,6 @@ function loadScript(src: string) {
 }
 
 export async function loadExplorerRuntimeConfig() {
-  if (hasRuntimeConfig()) {
-    logRuntimeConfigStatus("initial script");
-    return;
-  }
-
   for (const url of getExplorerConfigUrls()) {
     await loadScript(url);
     if (hasRuntimeConfig()) {
@@ -64,5 +59,5 @@ export async function loadExplorerRuntimeConfig() {
     }
   }
 
-  logRuntimeConfigStatus("not loaded");
+  logRuntimeConfigStatus(hasRuntimeConfig() ? "initial script" : "not loaded");
 }
