@@ -57,7 +57,7 @@ function isPixelStreamingEnabled() {
     return parseFeatureFlag(urlValue) ?? true;
   }
 
-  return parseFeatureFlag(import.meta.env.VITE_HOMW_PIXEL_STREAMING) ?? true;
+  return parseFeatureFlag(import.meta.env.VITE_HOMW_PIXEL_STREAMING) ?? false;
 }
 
 function getArcwareConfig() {

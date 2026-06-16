@@ -42,7 +42,7 @@ The React bridge parses these legacy responses:
 
 ## Pixel Streaming
 - The React app now mounts the Arcware WebRTC client in `src/components/streaming/ArcwarePixelStream.tsx`.
-- Pixel Streaming is enabled by default.
+- Pixel Streaming is temporarily disabled by default.
 - Enable it from the URL with `?homwStream=1`.
 - Disable it from the URL with `?homwStream=0`.
 - Enable it from environment config with `VITE_HOMW_PIXEL_STREAMING=true`.
