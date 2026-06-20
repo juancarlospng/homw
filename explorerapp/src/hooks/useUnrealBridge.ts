@@ -7,10 +7,11 @@ import {
 
 function getInitialState(): UnrealTourState {
   const params = new URLSearchParams(window.location.search);
-  const view = params.get("view");
+  const view = params.get("view") ?? params.get("mode") ?? params.get("screen") ?? window.location.hash.replace("#", "");
+  const normalizedView = view.toLowerCase();
 
   return {
-    mode: view === "tour" ? "apartment" : "explorer",
+    mode: normalizedView === "explorer" ? "explorer" : "apartment",
     canInteract: false,
     availability: "Available",
   };

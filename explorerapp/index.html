@@ -5,10 +5,137 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="./explorer-config.js"></script>
     <title>HOMW Interior Tour UI</title>
-    <script type="module" crossorigin src="./assets/index-BTyM1vo6.js"></script>
+    <script type="module" crossorigin src="./assets/index-qVwhbyw1.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-CD3i-e7M.css">
   </head>
   <body>
+    <div class="mobile-orientation-notice" role="status">
+      <div class="phone-rotate-icon" aria-hidden="true"></div>
+      <strong>Rotate your phone</strong>
+      <span>HOMW Explorer works best in landscape mode.</span>
+    </div>
     <div id="root"></div>
+    <script>
+      (() => {
+        const emitToUnreal = (payload) => {
+          if (window.homwEmitUIInteraction) {
+            window.homwEmitUIInteraction(payload);
+            return;
+          }
+          if (window.ArcanePlayer?.emitUIEvent) {
+            window.ArcanePlayer.emitUIEvent(payload);
+            return;
+          }
+          console.info("[HOMW mobile control]", payload);
+        };
+
+        const ensureMobileTourControls = () => {
+          const root = document.querySelector(".tour-page");
+          const existing = document.querySelector(".mobile-tour-controls");
+          if (!root?.classList.contains("is-tour")) {
+            existing?.remove();
+            return;
+          }
+          if (existing) return;
+
+          const controls = document.createElement("div");
+          controls.className = "mobile-tour-controls";
+          controls.setAttribute("aria-label", "Mobile tour controls");
+
+          const joystick = document.createElement("div");
+          joystick.className = "mobile-joystick";
+          const thumb = document.createElement("span");
+          thumb.className = "mobile-joystick-thumb";
+          joystick.appendChild(thumb);
+
+          const zoom = document.createElement("button");
+          zoom.className = "mobile-zoom-button";
+          zoom.type = "button";
+          zoom.setAttribute("aria-label", "Toggle zoom");
+          zoom.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4.5 4.5"></path><path d="M11 7v8"></path><path d="M7 11h8"></path></svg>';
+
+          let zoomed = false;
+          const sendMove = (x, y) => {
+            emitToUnreal({
+              MoveForward: Number((-y).toFixed(2)),
+              MoveRight: Number(x.toFixed(2)),
+              MobileJoystick: { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) },
+            });
+          };
+          const updateJoystick = (clientX, clientY) => {
+            const box = joystick.getBoundingClientRect();
+            const radius = Math.min(box.width, box.height) / 2;
+            const rawX = (clientX - (box.left + box.width / 2)) / radius;
+            const rawY = (clientY - (box.top + box.height / 2)) / radius;
+            const length = Math.hypot(rawX, rawY);
+            const x = length > 1 ? rawX / length : rawX;
+            const y = length > 1 ? rawY / length : rawY;
+            thumb.style.transform = `translate(${x * 22}px, ${y * 22}px)`;
+            sendMove(x, y);
+          };
+          const stopJoystick = () => {
+            thumb.style.transform = "translate(0, 0)";
+            sendMove(0, 0);
+          };
+
+          joystick.addEventListener("pointerdown", (event) => {
+            joystick.setPointerCapture(event.pointerId);
+            updateJoystick(event.clientX, event.clientY);
+          });
+          joystick.addEventListener("pointermove", (event) => {
+            if (!joystick.hasPointerCapture(event.pointerId)) return;
+            updateJoystick(event.clientX, event.clientY);
+          });
+          joystick.addEventListener("pointerup", (event) => {
+            joystick.releasePointerCapture(event.pointerId);
+            stopJoystick();
+          });
+          joystick.addEventListener("pointercancel", stopJoystick);
+          zoom.addEventListener("click", () => {
+            zoomed = !zoomed;
+            zoom.classList.toggle("is-active", zoomed);
+            zoom.setAttribute("aria-pressed", String(zoomed));
+            emitToUnreal({ Zoom: zoomed, MobileZoom: zoomed });
+          });
+
+          controls.append(joystick, zoom);
+          root.appendChild(controls);
+        };
+
+        const syncMobileOverlaps = () => {
+          const lookPanel = document.querySelector(".look-action-panel");
+          const tourControls = document.querySelector(".mobile-tour-controls");
+          const settingsOpen = document.querySelector(".preview-settings.is-open");
+          const drawerOpen = document.querySelector(".hud-grid.is-mobile-open");
+          lookPanel?.classList.toggle("is-mobile-hidden", Boolean(settingsOpen || drawerOpen));
+          tourControls?.classList.toggle("is-hidden", Boolean(drawerOpen));
+        };
+
+        const ensureMobilePanelToggle = () => {
+          const root = document.querySelector(".tour-page");
+          const grid = document.querySelector(".hud-grid");
+          if (!root || !grid || document.querySelector(".mobile-panel-toggle")) return;
+          const button = document.createElement("button");
+          button.className = "mobile-panel-toggle";
+          button.type = "button";
+          const syncLabel = () => {
+            button.textContent = grid.classList.contains("is-mobile-open") ? "Hide" : "Controls";
+          };
+          button.addEventListener("click", () => {
+            grid.classList.toggle("is-mobile-open");
+            button.classList.toggle("is-open", grid.classList.contains("is-mobile-open"));
+            syncLabel();
+            syncMobileOverlaps();
+          });
+          syncLabel();
+          root.insertBefore(button, grid);
+        };
+        window.setInterval(() => {
+          ensureMobilePanelToggle();
+          ensureMobileTourControls();
+          syncMobileOverlaps();
+        }, 250);
+      })();
+    </script>
   </body>
 </html>

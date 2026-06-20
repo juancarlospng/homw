@@ -14,11 +14,7 @@ export function TourTopbar({ activeSection = "Home", onNavigate }: TourTopbarPro
   return (
     <header className="tour-topbar">
       <div className="brand-lockup">
-        <div className="brand-mark">H</div>
-        <div>
-          <strong>HOMW</strong>
-          <span>Real Estate Decision Infrastructure</span>
-        </div>
+        <img className="brand-logo" src="./logohomw.png" alt="HOMW" />
       </div>
       <nav aria-label="Tour sections" className="tour-tabs">
         {tabs.map((tab) => (

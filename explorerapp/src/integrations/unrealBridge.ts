@@ -145,12 +145,20 @@ export function parseUnrealResponse(response: string, previous: UnrealTourState)
     next.availability = getAvailability(response);
   }
 
-  if (response.includes("apartment") || response.includes("gameresume")) {
+  const normalizedResponse = response.toLowerCase();
+
+  if (
+    normalizedResponse.includes("apartment") ||
+    normalizedResponse.includes("gameresume") ||
+    normalizedResponse === "tour" ||
+    normalizedResponse === "liveit" ||
+    normalizedResponse === "live it"
+  ) {
     next.mode = "apartment";
     next.activePalette = undefined;
   }
 
-  if (response.includes("gamepause")) {
+  if (normalizedResponse.includes("gamepause")) {
     next.mode = "paused";
   }
 
@@ -168,7 +176,7 @@ export function parseUnrealResponse(response: string, previous: UnrealTourState)
     next.activePalette = "fabric";
   }
 
-  if (response.includes("explorerlevel")) {
+  if (normalizedResponse.includes("explorerlevel") || normalizedResponse === "explorer") {
     next.mode = "explorer";
     next.activePalette = undefined;
   }

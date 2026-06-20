@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import interiorImage from "../../assets/interior-tour.png";
 import {
   editableMeshes,
@@ -25,7 +25,6 @@ import {
 } from "../../integrations/supabaseUnits";
 import { moodToUnrealTime, oldMaterialWallPalette } from "../../integrations/unrealBridge";
 import { TourTopbar } from "../layout/TourTopbar";
-import { ArcwarePixelStream } from "../streaming/ArcwarePixelStream";
 import { GlassPanel } from "../ui/GlassPanel";
 import { MaterialSwatch } from "../ui/MaterialSwatch";
 import { ScoreRing } from "../ui/ScoreRing";
@@ -122,8 +121,12 @@ export function InteriorEditorPage() {
   const [selectedMesh, setSelectedMesh] = useState<(typeof editableMeshes)[number]["label"]>("Sofa");
   const [selectedMaterialId, setSelectedMaterialId] = useState("fabric-01");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
+  const [joystickPosition, setJoystickPosition] = useState({ x: 0, y: 0 });
+  const [isZoomed, setIsZoomed] = useState(false);
   const [enabledPreview, setEnabledPreview] = useState(() => new Set(previewToggles));
   const { emit, tourState, handleResponse } = useUnrealBridge();
+  const joystickRef = useRef<HTMLDivElement | null>(null);
 
   const currentScreen = tourState.mode === "explorer" ? "explorer" : "tour";
   const isTourScreen = currentScreen === "tour";
@@ -131,6 +134,14 @@ export function InteriorEditorPage() {
   const visibleMaterials = activePalette ? materialPalettes[activePalette] : [];
   const filteredUnits = useMemo(() => filterUnits(units, unitFilters), [unitFilters, units]);
   const selectedUnitRows = selectedUnit ? getUnitDetailRows(selectedUnit) : [];
+
+  useEffect(() => {
+    window.homwWebRTCClient?.close?.();
+    window.homwWebRTCClient?.destroy?.();
+    window.homwWebRTCClient?.disconnect?.();
+    delete window.homwWebRTCClient;
+    delete window.homwEmitUIInteraction;
+  }, []);
 
   function navigateTour(descriptor: string, label: string) {
     setActiveSection(label);
@@ -331,6 +342,46 @@ export function InteriorEditorPage() {
     });
   }
 
+  function emitMobileMovement(x: number, y: number) {
+    emit({
+      MoveForward: Number((-y).toFixed(2)),
+      MoveRight: Number(x.toFixed(2)),
+      MobileJoystick: {
+        x: Number(x.toFixed(2)),
+        y: Number(y.toFixed(2)),
+      },
+    });
+  }
+
+  function updateJoystick(clientX: number, clientY: number) {
+    const joystick = joystickRef.current;
+    if (!joystick) return;
+
+    const bounds = joystick.getBoundingClientRect();
+    const radius = Math.min(bounds.width, bounds.height) / 2;
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const rawX = (clientX - centerX) / radius;
+    const rawY = (clientY - centerY) / radius;
+    const length = Math.hypot(rawX, rawY);
+    const x = length > 1 ? rawX / length : rawX;
+    const y = length > 1 ? rawY / length : rawY;
+
+    setJoystickPosition({ x, y });
+    emitMobileMovement(x, y);
+  }
+
+  function stopJoystick() {
+    setJoystickPosition({ x: 0, y: 0 });
+    emitMobileMovement(0, 0);
+  }
+
+  function toggleMobileZoom() {
+    const nextZoom = !isZoomed;
+    setIsZoomed(nextZoom);
+    emit({ Zoom: nextZoom, MobileZoom: nextZoom });
+  }
+
   function toggleNumberFilter(key: "bathrooms" | "bedrooms", value: number) {
     setUnitFilters((current) => {
       const currentValues = current[key];
@@ -414,11 +465,11 @@ export function InteriorEditorPage() {
       style={{ "--scene-image": `url(${interiorImage})` } as CSSProperties}
     >
       <div className="tour-scene" aria-hidden="true" />
-      <ArcwarePixelStream
-        className="pixel-stream-layer"
-        onReady={() => emit({ time: dayTime })}
-        onResponse={handleResponse}
-      />
+      <div className="mobile-orientation-notice" role="status">
+        <div className="phone-rotate-icon" aria-hidden="true" />
+        <strong>Rotate your phone</strong>
+        <span>HOMW Explorer works best in landscape mode.</span>
+      </div>
       {currentScreen === "explorer" ? (
         <TourTopbar activeSection={activeSection} onNavigate={navigateTour} />
       ) : null}
@@ -426,7 +477,14 @@ export function InteriorEditorPage() {
       <div className={`preview-settings ${isPreviewOpen ? "is-open" : ""}`}>
         <div className="top-action-row">
           {isTourScreen ? (
-            <button className="back-explorer-button" onClick={() => emit("explorer")} type="button">
+            <button
+              className="back-explorer-button"
+              onClick={() => {
+                emit("explorer");
+                handleResponse("explorer");
+              }}
+              type="button"
+            >
               Back to Explorer
             </button>
           ) : null}
@@ -480,7 +538,15 @@ export function InteriorEditorPage() {
         </div>
       ) : null}
 
-      <div className="hud-grid">
+      <button
+        className={`mobile-panel-toggle ${isMobilePanelOpen ? "is-open" : ""}`}
+        onClick={() => setIsMobilePanelOpen((current) => !current)}
+        type="button"
+      >
+        {isMobilePanelOpen ? "Hide" : "Controls"}
+      </button>
+
+      <div className={`hud-grid ${isMobilePanelOpen ? "is-mobile-open" : ""}`}>
         {currentScreen === "explorer" ? (
           <div className="hud-column">
             {unitPanelMode === "overview" ? (
@@ -646,7 +712,14 @@ export function InteriorEditorPage() {
                   <button className="text-action-button" onClick={backToUnitFilters} type="button">
                     Back to Filters
                   </button>
-                  <button className="text-action-button primary" onClick={() => emit("tour")} type="button">
+                  <button
+                    className="text-action-button primary"
+                    onClick={() => {
+                      emit("tour");
+                      handleResponse("tour");
+                    }}
+                    type="button"
+                  >
                     Go to Live It
                   </button>
                 </div>
@@ -793,23 +866,25 @@ export function InteriorEditorPage() {
         </div>
       </div>
 
-      <aside className="movement-guide" aria-label="Movement guide">
-        <div className="key-cluster" aria-hidden="true">
-          <span>W</span>
-          <span>A</span>
-          <span>S</span>
-          <span>D</span>
-        </div>
-        <div>
-          <strong>{isTourScreen ? "Walk" : "Explore"}</strong>
-          <span>Mouse to look</span>
-        </div>
-        <span className="mouse-guide" aria-hidden="true" />
-      </aside>
+      {isTourScreen ? (
+        <aside className="movement-guide" aria-label="Movement guide">
+          <div className="key-cluster" aria-hidden="true">
+            <span>W</span>
+            <span>A</span>
+            <span>S</span>
+            <span>D</span>
+          </div>
+          <div>
+            <strong>Walk</strong>
+            <span>Mouse to look</span>
+          </div>
+          <span className="mouse-guide" aria-hidden="true" />
+        </aside>
+      ) : null}
 
       {isTourScreen ? (
         <>
-          <aside className="look-action-panel" aria-label="Look actions">
+          <aside className={`look-action-panel ${isPreviewOpen || isMobilePanelOpen ? "is-mobile-hidden" : ""}`} aria-label="Look actions">
             <button className="save-look-button" onClick={saveLook} type="button">
               <span>Save Look</span>
               <span className="bookmark-icon" aria-hidden="true" />
@@ -819,6 +894,48 @@ export function InteriorEditorPage() {
               <span className="arrow-icon" aria-hidden="true">›</span>
             </button>
           </aside>
+
+          <div className={`mobile-tour-controls ${isMobilePanelOpen ? "is-hidden" : ""}`} aria-label="Mobile tour controls">
+            <div
+              className="mobile-joystick"
+              onPointerCancel={stopJoystick}
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                updateJoystick(event.clientX, event.clientY);
+              }}
+              onPointerMove={(event) => {
+                if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+                updateJoystick(event.clientX, event.clientY);
+              }}
+              onPointerUp={(event) => {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+                stopJoystick();
+              }}
+              ref={joystickRef}
+              role="application"
+            >
+              <span
+                className="mobile-joystick-thumb"
+                style={{
+                  transform: `translate(${joystickPosition.x * 24}px, ${joystickPosition.y * 24}px)`,
+                }}
+              />
+            </div>
+            <button
+              aria-pressed={isZoomed}
+              aria-label="Toggle zoom"
+              className={`mobile-zoom-button ${isZoomed ? "is-active" : ""}`}
+              onClick={toggleMobileZoom}
+              type="button"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m16.5 16.5 4.5 4.5" />
+                <path d="M11 7v8" />
+                <path d="M7 11h8" />
+              </svg>
+            </button>
+          </div>
         </>
       ) : null}
     </div>
