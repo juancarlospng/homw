@@ -25,6 +25,7 @@ import {
 } from "../../integrations/supabaseUnits";
 import { moodToUnrealTime, oldMaterialWallPalette } from "../../integrations/unrealBridge";
 import { TourTopbar } from "../layout/TourTopbar";
+import { ArcwarePixelStream } from "../streaming/ArcwarePixelStream";
 import { GlassPanel } from "../ui/GlassPanel";
 import { MaterialSwatch } from "../ui/MaterialSwatch";
 import { ScoreRing } from "../ui/ScoreRing";
@@ -134,14 +135,6 @@ export function InteriorEditorPage() {
   const visibleMaterials = activePalette ? materialPalettes[activePalette] : [];
   const filteredUnits = useMemo(() => filterUnits(units, unitFilters), [unitFilters, units]);
   const selectedUnitRows = selectedUnit ? getUnitDetailRows(selectedUnit) : [];
-
-  useEffect(() => {
-    window.homwWebRTCClient?.close?.();
-    window.homwWebRTCClient?.destroy?.();
-    window.homwWebRTCClient?.disconnect?.();
-    delete window.homwWebRTCClient;
-    delete window.homwEmitUIInteraction;
-  }, []);
 
   function navigateTour(descriptor: string, label: string) {
     setActiveSection(label);
@@ -465,6 +458,7 @@ export function InteriorEditorPage() {
       style={{ "--scene-image": `url(${interiorImage})` } as CSSProperties}
     >
       <div className="tour-scene" aria-hidden="true" />
+      <ArcwarePixelStream className="pixel-stream-layer" onResponse={handleResponse} />
       <div className="mobile-orientation-notice" role="status">
         <div className="phone-rotate-icon" aria-hidden="true" />
         <strong>Rotate your phone</strong>

@@ -42,14 +42,14 @@ The React bridge parses these legacy responses:
 
 ## Pixel Streaming
 - The React app now mounts the Arcware WebRTC client in `src/components/streaming/ArcwarePixelStream.tsx`.
-- Pixel Streaming is temporarily disabled by default.
-- Enable it from the URL with `?homwStream=1`.
+- Pixel Streaming is enabled by default.
+- Force-enable it from the URL with `?homwStream=1`.
 - Disable it from the URL with `?homwStream=0`.
-- Enable it from environment config with `VITE_HOMW_PIXEL_STREAMING=true`.
+- Control it from environment config with `VITE_HOMW_PIXEL_STREAMING=true` or `VITE_HOMW_PIXEL_STREAMING=false`.
 - Current Arcware defaults:
   - `address`: `wss://signalling-client.ragnarok.arcware.cloud/`
-  - `shareId`: `share-1d410199-74ce-4253-8818-6deb7f15b55b`
-  - `projectId`: `b19a8291-4b3a-4f43-a3dc-b6b1844ffc75`
+  - `shareId`: `share-cd5f65c6-ecab-4925-9cc1-54c2e6b48edd`
+  - `projectId`: `0432103a-2246-4448-86c5-413f4ce947af`
 - These can be overridden with `VITE_ARCWARE_ADDRESS`, `VITE_ARCWARE_SHARE_ID`, and `VITE_ARCWARE_PROJECT_ID`.
 - They can also be overridden from the URL with `arcwareAddress`, `arcwareShareId`, and `arcwareProjectId`.
 

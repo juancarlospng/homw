@@ -34,8 +34,8 @@ const ARCWARE_CLIENT_URL = "https://unpkg.com/@arcware/webrtc-plugin@latest/inde
 
 const LEGACY_ARCWARE_CONFIG = {
   address: "wss://signalling-client.ragnarok.arcware.cloud/",
-  projectId: "b19a8291-4b3a-4f43-a3dc-b6b1844ffc75",
-  shareId: "share-1d410199-74ce-4253-8818-6deb7f15b55b",
+  projectId: "0432103a-2246-4448-86c5-413f4ce947af",
+  shareId: "share-cd5f65c6-ecab-4925-9cc1-54c2e6b48edd",
 };
 
 function parseFeatureFlag(value: string | boolean | undefined | null) {
@@ -57,7 +57,7 @@ function isPixelStreamingEnabled() {
     return parseFeatureFlag(urlValue) ?? true;
   }
 
-  return parseFeatureFlag(import.meta.env.VITE_HOMW_PIXEL_STREAMING) ?? false;
+  return parseFeatureFlag(import.meta.env.VITE_HOMW_PIXEL_STREAMING) ?? true;
 }
 
 function getArcwareConfig() {
