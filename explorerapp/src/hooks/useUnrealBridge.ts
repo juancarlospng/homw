@@ -10,8 +10,14 @@ function getInitialState(): UnrealTourState {
   const view = params.get("view") ?? params.get("mode") ?? params.get("screen") ?? window.location.hash.replace("#", "");
   const normalizedView = view.toLowerCase();
 
+  const startsInTour =
+    normalizedView === "tour" ||
+    normalizedView === "apartment" ||
+    normalizedView === "liveit" ||
+    normalizedView === "live-it";
+
   return {
-    mode: normalizedView === "explorer" ? "explorer" : "apartment",
+    mode: startsInTour ? "apartment" : "explorer",
     canInteract: false,
     availability: "Available",
   };
