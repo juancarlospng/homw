@@ -311,8 +311,8 @@ Current defaults:
 
 ```txt
 address:   wss://signalling-client.ragnarok.arcware.cloud/
-projectId: 0432103a-2246-4448-86c5-413f4ce947af
-shareId:   share-cd5f65c6-ecab-4925-9cc1-54c2e6b48edd
+projectId: b472af60-49d1-40ab-b26b-a8b1aa21bbd5
+shareId:   share-d242ba65-ff01-48b3-9501-fdb82b4502f5
 ```
 
 These can be overridden with URL parameters:
