@@ -31,6 +31,9 @@ type ArcwarePixelStreamProps = {
 };
 
 const ARCWARE_CLIENT_URL = "https://unpkg.com/@arcware/webrtc-plugin@latest/index_new.umd.js";
+const STREAM_START_TIMEOUT_MS = 70000;
+const STREAM_RETRY_DELAY_MS = 5000;
+const STREAM_MAX_RETRIES = 4;
 
 const LEGACY_ARCWARE_CONFIG = {
   address: "wss://signalling-client.ragnarok.arcware.cloud/",
@@ -85,6 +88,11 @@ function cleanupClient(client: ArcwareClient | undefined) {
   client?.disconnect?.();
 }
 
+function clearStreamContainer(containerId: string) {
+  const container = document.getElementById(containerId);
+  if (container) container.replaceChildren();
+}
+
 export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePixelStreamProps) {
   const reactId = useId();
   const containerId = useMemo(() => `arcware-stream-${reactId.replace(/:/g, "")}`, [reactId]);
@@ -93,7 +101,7 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
   const emitterRef = useRef<UnrealEmitter | undefined>(undefined);
   const onReadyRef = useRef<ArcwarePixelStreamProps["onReady"]>(onReady);
   const onResponseRef = useRef(onResponse);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "retrying" | "ready" | "error">("loading");
 
   onReadyRef.current = onReady;
   onResponseRef.current = onResponse;
@@ -104,13 +112,44 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
     let cancelled = false;
     let ready = false;
     let mediaObserver: MutationObserver | undefined;
+    let retryTimer: number | undefined;
+    let startTimer: number | undefined;
+    let retryCount = 0;
     const mediaReadyCleanups: Array<() => void> = [];
 
     const markReady = () => {
       if (cancelled || ready) return;
       ready = true;
+      if (startTimer) window.clearTimeout(startTimer);
       setStatus("ready");
       onReadyRef.current?.();
+    };
+
+    const cleanupStream = () => {
+      cleanupClient(clientRef.current);
+      mediaObserver?.disconnect();
+      mediaObserver = undefined;
+      mediaReadyCleanups.splice(0).forEach((cleanup) => cleanup());
+      clientRef.current = undefined;
+      emitterRef.current = undefined;
+      clearStreamContainer(containerId);
+    };
+
+    const scheduleRetry = () => {
+      if (cancelled || ready) return;
+
+      cleanupStream();
+
+      if (retryCount >= STREAM_MAX_RETRIES) {
+        setStatus("error");
+        return;
+      }
+
+      retryCount += 1;
+      setStatus("retrying");
+      retryTimer = window.setTimeout(() => {
+        if (!cancelled && !ready) connect();
+      }, STREAM_RETRY_DELAY_MS);
     };
 
     const watchStreamMedia = () => {
@@ -157,6 +196,7 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
     async function connect() {
       try {
         setStatus("loading");
+        if (startTimer) window.clearTimeout(startTimer);
         const config = getArcwareConfig();
         const arcware = (await import(/* @vite-ignore */ ARCWARE_CLIENT_URL)) as ArcwareModule;
 
@@ -186,9 +226,10 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
         window.homwWebRTCClient = client;
         window.homwEmitUIInteraction = emitUIInteraction;
         watchStreamMedia();
+        startTimer = window.setTimeout(scheduleRetry, STREAM_START_TIMEOUT_MS);
       } catch (error) {
         console.error("[HOMW Pixel Streaming]", error);
-        setStatus("error");
+        scheduleRetry();
       }
     }
 
@@ -202,11 +243,9 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
       if (window.homwEmitUIInteraction === emitterRef.current) {
         delete window.homwEmitUIInteraction;
       }
-      cleanupClient(clientRef.current);
-      mediaObserver?.disconnect();
-      mediaReadyCleanups.forEach((cleanup) => cleanup());
-      clientRef.current = undefined;
-      emitterRef.current = undefined;
+      if (retryTimer) window.clearTimeout(retryTimer);
+      if (startTimer) window.clearTimeout(startTimer);
+      cleanupStream();
     };
   }, [containerId, streamingEnabled]);
 
@@ -219,7 +258,11 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
       <div className="pixel-stream-container" id={containerId} />
       {status !== "ready" ? (
         <div className={`pixel-stream-status is-${status}`}>
-          {status === "error" ? "Pixel Streaming unavailable" : "Connecting to Unreal"}
+          {status === "error"
+            ? "Pixel Streaming unavailable"
+            : status === "retrying"
+              ? "Arcware is busy. Retrying stream"
+              : "Connecting to Unreal"}
         </div>
       ) : null}
     </div>

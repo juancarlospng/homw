@@ -109,6 +109,10 @@ button {
   background: rgba(42, 18, 22, 0.86);
 }
 
+.pixel-stream-status.is-retrying {
+  background: rgba(42, 32, 12, 0.86);
+}
+
 .tour-topbar {
   position: fixed;
   z-index: var(--homw-z-nav);
