@@ -315,21 +315,19 @@ projectId: b472af60-49d1-40ab-b26b-a8b1aa21bbd5
 shareId:   share-d242ba65-ff01-48b3-9501-fdb82b4502f5
 ```
 
-These can be overridden with URL parameters:
+Only the signalling address can be overridden with a URL parameter:
 
 ```txt
 ?arcwareAddress=...
-?arcwareProjectId=...
-?arcwareShareId=...
 ```
 
-or Vite environment variables:
+or Vite environment variable:
 
 ```txt
 VITE_ARCWARE_ADDRESS
-VITE_ARCWARE_PROJECT_ID
-VITE_ARCWARE_SHARE_ID
 ```
+
+`projectId` and `shareId` are fixed in `ArcwarePixelStream.tsx`.
 
 ## Debugging Tools
 

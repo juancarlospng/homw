@@ -13,9 +13,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const ARCWARE_PROJECT_ID = "b472af60-49d1-40ab-b26b-a8b1aa21bbd5";
-const ARCWARE_SHARE_ID = "share-d242ba65-ff01-48b3-9501-fdb82b4502f5";
-const DEMO_URL = `/explorerapp/index.html?arcwareProjectId=${ARCWARE_PROJECT_ID}&arcwareShareId=${ARCWARE_SHARE_ID}`;
+const DEMO_URL = "/explorerapp/index.html";
 
 const imagePath = (name) => `/images/homw/${name}.png`;
 

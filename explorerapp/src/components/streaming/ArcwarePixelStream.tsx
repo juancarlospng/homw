@@ -35,7 +35,7 @@ const STREAM_START_TIMEOUT_MS = 70000;
 const STREAM_RETRY_DELAY_MS = 5000;
 const STREAM_MAX_RETRIES = 4;
 
-const LEGACY_ARCWARE_CONFIG = {
+const ARCWARE_CONFIG = {
   address: "wss://signalling-client.ragnarok.arcware.cloud/",
   projectId: "b472af60-49d1-40ab-b26b-a8b1aa21bbd5",
   shareId: "share-d242ba65-ff01-48b3-9501-fdb82b4502f5",
@@ -70,15 +70,9 @@ function getArcwareConfig() {
     address:
       params.get("arcwareAddress") ??
       import.meta.env.VITE_ARCWARE_ADDRESS ??
-      LEGACY_ARCWARE_CONFIG.address,
-    projectId:
-      params.get("arcwareProjectId") ??
-      import.meta.env.VITE_ARCWARE_PROJECT_ID ??
-      LEGACY_ARCWARE_CONFIG.projectId,
-    shareId:
-      params.get("arcwareShareId") ??
-      import.meta.env.VITE_ARCWARE_SHARE_ID ??
-      LEGACY_ARCWARE_CONFIG.shareId,
+      ARCWARE_CONFIG.address,
+    projectId: ARCWARE_CONFIG.projectId,
+    shareId: ARCWARE_CONFIG.shareId,
   };
 }
 
