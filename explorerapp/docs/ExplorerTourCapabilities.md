@@ -312,7 +312,7 @@ Current defaults:
 ```txt
 address:   wss://signalling-client.ragnarok.arcware.cloud/
 projectId: b472af60-49d1-40ab-b26b-a8b1aa21bbd5
-shareId:   share-d242ba65-ff01-48b3-9501-fdb82b4502f5
+shareId:   share-41c7a06e-72d4-4cf4-ae26-e1dbc976f0bf
 ```
 
 Only the signalling address can be overridden with a URL parameter:
