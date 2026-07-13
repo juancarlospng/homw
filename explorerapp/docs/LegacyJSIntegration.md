@@ -48,8 +48,8 @@ The React bridge parses these legacy responses:
 - Control it from environment config with `VITE_HOMW_PIXEL_STREAMING=true` or `VITE_HOMW_PIXEL_STREAMING=false`.
 - Current Arcware defaults:
   - `address`: `wss://signalling-client.ragnarok.arcware.cloud/`
-  - `shareId`: `share-41c7a06e-72d4-4cf4-ae26-e1dbc976f0bf`
-  - `projectId`: `b472af60-49d1-40ab-b26b-a8b1aa21bbd5`
+  - `shareId`: `share-49821913-c770-47ea-aa77-320067c2a96b`
+  - `projectId`: `4c72a3d6-7015-4fa1-89bb-694beed654c8`
 - `projectId` and `shareId` are fixed in code so deployment variables or URL params cannot override them.
 - The signalling `address` can still be overridden with `VITE_ARCWARE_ADDRESS` or `arcwareAddress`.
 

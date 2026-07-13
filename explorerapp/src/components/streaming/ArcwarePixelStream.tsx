@@ -37,8 +37,8 @@ const STREAM_MAX_RETRIES = 4;
 
 const ARCWARE_CONFIG = {
   address: "wss://signalling-client.ragnarok.arcware.cloud/",
-  projectId: "b472af60-49d1-40ab-b26b-a8b1aa21bbd5",
-  shareId: "share-41c7a06e-72d4-4cf4-ae26-e1dbc976f0bf",
+  projectId: "4c72a3d6-7015-4fa1-89bb-694beed654c8",
+  shareId: "share-49821913-c770-47ea-aa77-320067c2a96b",
 };
 
 function parseFeatureFlag(value: string | boolean | undefined | null) {
