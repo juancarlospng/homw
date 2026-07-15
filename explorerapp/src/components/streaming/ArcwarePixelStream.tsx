@@ -40,8 +40,8 @@ const STREAM_RELOAD_STORAGE_KEY = "homw:arcware-stream-reloads";
 
 const ARCWARE_CONFIG = {
   address: "wss://signalling-client.ragnarok.arcware.cloud/",
-  projectId: "4c72a3d6-7015-4fa1-89bb-694beed654c8",
-  shareId: "share-49821913-c770-47ea-aa77-320067c2a96b",
+  projectId: "1e70cafa-f154-482c-a954-2fa56935c4c7",
+  shareId: "share-839648dd-1966-4b0a-bf39-dd7143ddb7c9",
 };
 
 function parseFeatureFlag(value: string | boolean | undefined | null) {
