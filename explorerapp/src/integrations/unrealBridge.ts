@@ -121,23 +121,29 @@ export function createUnrealEmitter(): UnrealEmitter {
 }
 
 function isEmptyUnitResponse(response: string) {
-  return /^Unit\s*(None|Null|Undefined)?$/i.test(response.trim());
+  return /^Unit\s*(None|Null|Undefined)$/i.test(response.trim());
+}
+
+function getSelectedUnitDescriptor(response: string) {
+  const match = response.match(/\bUnit[\s:_#-]*(\d+)\b/i);
+  return match ? `Unit ${match[1]}` : undefined;
 }
 
 export function parseUnrealResponse(response: string, previous: UnrealTourState): UnrealTourState {
   const next: UnrealTourState = { ...previous, rawResponse: response };
+  const selectedUnitDescriptor = getSelectedUnitDescriptor(response);
 
   if (response === "HitTrue" || response === "DoorHitTrue" || response === "EditableHitTrue") {
     next.canInteract = true;
-  } else if (!response.includes("Unit") && !response.includes("<b>Surface</b><br>")) {
+  } else if (!selectedUnitDescriptor && !response.includes("<b>Surface</b><br>")) {
     next.canInteract = false;
   }
 
   if (isEmptyUnitResponse(response)) {
     next.selectedUnit = undefined;
     next.unitDetailsHtml = undefined;
-  } else if (response.includes("Unit")) {
-    next.selectedUnit = response;
+  } else if (selectedUnitDescriptor) {
+    next.selectedUnit = selectedUnitDescriptor;
   }
 
   if (response.includes("<b>Surface</b><br>")) {
@@ -176,7 +182,7 @@ export function parseUnrealResponse(response: string, previous: UnrealTourState)
     next.activePalette = "fabric";
   }
 
-  if (normalizedResponse.includes("explorerlevel") || normalizedResponse === "explorer") {
+  if (normalizedResponse.includes("explorer")) {
     next.mode = "explorer";
     next.activePalette = undefined;
   }

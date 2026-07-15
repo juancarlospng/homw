@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import interiorImage from "../../assets/interior-tour.png";
 import {
   editableMeshes,
@@ -27,6 +27,7 @@ import { moodToUnrealTime, oldMaterialWallPalette } from "../../integrations/unr
 import { TourTopbar } from "../layout/TourTopbar";
 import { ArcwarePixelStream } from "../streaming/ArcwarePixelStream";
 import { GlassPanel } from "../ui/GlassPanel";
+import { GuidedTour, type GuidedTourStep } from "../ui/GuidedTour";
 import { MaterialSwatch } from "../ui/MaterialSwatch";
 import { ScoreRing } from "../ui/ScoreRing";
 import { SegmentedControl } from "../ui/SegmentedControl";
@@ -50,6 +51,9 @@ const unrealTimeRange = {
   max: 362,
 } as const;
 
+const DAY_MOOD = "Day" as const;
+const DAY_TIME = moodToUnrealTime(DAY_MOOD);
+
 const initialUnitFilters: UnitFilters = {
   availability: ["Available", "Reserved", "Sold"],
   bathrooms: [1, 2, 3],
@@ -57,6 +61,89 @@ const initialUnitFilters: UnitFilters = {
   budget: 500000,
   surface: 20,
 };
+
+const explorerGuidedTourSteps: GuidedTourStep[] = [
+  {
+    id: "explorer-scene",
+    selector: '[data-tour="live-stream"]',
+    eyebrow: "Explorer",
+    title: "Start with the full project view.",
+    body: "This is the building and neighborhood experience. Visitors can understand the project first, then move into units or the apartment tour when they are ready.",
+  },
+  {
+    id: "top-navigation",
+    selector: '[data-tour="top-navigation"]',
+    eyebrow: "Project overview",
+    title: "Use the top navigation to move through the project.",
+    body: "These tabs help visitors review the home view, amenities, surroundings and available units before entering the full live apartment tour.",
+  },
+  {
+    id: "mood-controls",
+    selector: '[data-tour="mood-controls"]',
+    eyebrow: "Atmosphere",
+    title: "Preview the project in different moods.",
+    body: "The mood panel changes the time-of-day feeling so visitors can quickly understand how the project reads in daylight, sunset or night.",
+  },
+  {
+    id: "unit-filters",
+    selector: '[data-tour="unit-filters"]',
+    eyebrow: "Availability",
+    title: "Filter units without leaving the demo.",
+    body: "Visitors can narrow the inventory by surface, budget, availability, bedrooms and bathrooms, then select a unit to continue into the live tour.",
+  },
+  {
+    id: "preview-layers",
+    selector: '[data-tour="preview-layers"]',
+    eyebrow: "Live layers",
+    title: "Open technical preview layers when needed.",
+    body: "This compact menu can expose layer toggles for the real-time preview while keeping the main interface clean for everyday visitors.",
+  },
+];
+
+const apartmentGuidedTourSteps: GuidedTourStep[] = [
+  {
+    id: "apartment-stream",
+    selector: '[data-tour="live-stream"]',
+    eyebrow: "Apartment",
+    title: "Enter the live apartment experience.",
+    body: "This view is focused on the interior stream. Users can move through the apartment, inspect finishes and interact with the design tools.",
+  },
+  {
+    id: "journey-switch",
+    selector: '[data-tour="journey-switch"]',
+    eyebrow: "Live It",
+    title: "Switch between exploring and customizing.",
+    body: "The journey switch separates guided exploration from design customization, so users always know which mode they are in.",
+  },
+  {
+    id: "movement-controls",
+    selector: '[data-tour="movement-controls"]',
+    eyebrow: "Navigation",
+    title: "Move through the apartment like a first-person tour.",
+    body: "Desktop visitors can walk with WASD and look around with the mouse. Mobile visitors get touch controls on smaller screens.",
+  },
+  {
+    id: "apartment-mood-controls",
+    selector: '[data-tour="mood-controls"]',
+    eyebrow: "Atmosphere",
+    title: "Set the interior mood before customizing.",
+    body: "Mood and time controls help visitors evaluate how the interior feels under different lighting conditions.",
+  },
+  {
+    id: "customize-controls",
+    selector: '[data-tour="customize-controls"]',
+    eyebrow: "Customization",
+    title: "Select furniture and finishes from the side panel.",
+    body: "In Customize mode, users choose editable items and apply material palettes directly to the streamed apartment experience.",
+  },
+  {
+    id: "look-actions",
+    selector: '[data-tour="look-actions"]',
+    eyebrow: "Decision point",
+    title: "Save a look or move toward reservation.",
+    body: "These final actions turn the live exploration into a practical sales flow: visitors can keep a preferred design or continue toward reserving.",
+  },
+];
 
 function formatDayTime(value: number) {
   const normalized = (value - unrealTimeRange.min) / (unrealTimeRange.max - unrealTimeRange.min);
@@ -102,7 +189,7 @@ function getUnitDetailRows(unit: UnitRecord) {
 }
 
 function isEmptyUnrealUnitResponse(response: string | undefined) {
-  return /^Unit\s*(None|Null|Undefined)?$/i.test((response ?? "").trim());
+  return /^Unit\s*(None|Null|Undefined)$/i.test((response ?? "").trim());
 }
 
 export function InteriorEditorPage() {
@@ -116,8 +203,8 @@ export function InteriorEditorPage() {
   const [selectedUnitStatus, setSelectedUnitStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [dismissedUnitResponse, setDismissedUnitResponse] = useState<string | null>(null);
   const [activeJourney, setActiveJourney] = useState<(typeof journeySteps)[number]>("Explore");
-  const [mood, setMood] = useState<(typeof moods)[number]>("Sunset");
-  const [dayTime, setDayTime] = useState(moodToUnrealTime("Sunset"));
+  const [mood, setMood] = useState<(typeof moods)[number]>(DAY_MOOD);
+  const [dayTime, setDayTime] = useState(DAY_TIME);
   const [style, setStyle] = useState<(typeof interiorStyles)[number]>("Warm");
   const [selectedMesh, setSelectedMesh] = useState<(typeof editableMeshes)[number]["label"]>("Sofa");
   const [selectedMaterialId, setSelectedMaterialId] = useState("fabric-01");
@@ -128,6 +215,7 @@ export function InteriorEditorPage() {
   const [enabledPreview, setEnabledPreview] = useState(() => new Set(previewToggles));
   const { emit, tourState, handleResponse } = useUnrealBridge();
   const joystickRef = useRef<HTMLDivElement | null>(null);
+  const unitFilterTimersRef = useRef<number[]>([]);
 
   const currentScreen = tourState.mode === "explorer" ? "explorer" : "tour";
   const isTourScreen = currentScreen === "tour";
@@ -135,13 +223,61 @@ export function InteriorEditorPage() {
   const visibleMaterials = activePalette ? materialPalettes[activePalette] : [];
   const filteredUnits = useMemo(() => filterUnits(units, unitFilters), [unitFilters, units]);
   const selectedUnitRows = selectedUnit ? getUnitDetailRows(selectedUnit) : [];
+  const unitFilterPayload = useMemo(
+    () => ({
+      Availability: unitFilters.availability
+        .map((item) => ({ Available: 1, Reserved: 2, Sold: 3 })[item])
+        .join(""),
+      Bathroomcount: unitFilters.bathrooms.join(""),
+      Bedroomcount: unitFilters.bedrooms.join(""),
+      Budget: unitFilters.budget,
+      Surface: unitFilters.surface,
+    }),
+    [unitFilters],
+  );
+
+  const sendUnitFilterDescriptor = useCallback(() => {
+    emit(unitFilterPayload);
+  }, [emit, unitFilterPayload]);
+
+  const scheduleUnitFilterDescriptor = useCallback(() => {
+    unitFilterTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    sendUnitFilterDescriptor();
+    unitFilterTimersRef.current = [
+      window.setTimeout(sendUnitFilterDescriptor, 700),
+      window.setTimeout(sendUnitFilterDescriptor, 1800),
+      window.setTimeout(sendUnitFilterDescriptor, 3500),
+    ];
+  }, [sendUnitFilterDescriptor]);
+
+  const initializeDayMood = useCallback(() => {
+    setMood(DAY_MOOD);
+    setDayTime(DAY_TIME);
+    emit({ time: DAY_TIME });
+  }, [emit]);
+
+  const handleUnrealResponse = useCallback(
+    (response: string) => {
+      if (/\bUnit[\s:_#-]*\d+\b/i.test(response)) {
+        setDismissedUnitResponse(null);
+      }
+      handleResponse(response);
+    },
+    [handleResponse],
+  );
 
   function navigateTour(descriptor: string, label: string) {
+    unitFilterTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    unitFilterTimersRef.current = [];
     setActiveSection(label);
     setSelectedUnit(null);
     setDismissedUnitResponse(null);
     setUnitPanelMode(label === "Units" ? "filters" : "overview");
     emit({ topcall: descriptor });
+
+    if (label === "Units") {
+      scheduleUnitFilterDescriptor();
+    }
   }
 
   useEffect(() => {
@@ -184,16 +320,25 @@ export function InteriorEditorPage() {
   useEffect(() => {
     if (unitPanelMode !== "filters") return;
 
-    emit({
-      Availability: unitFilters.availability
-        .map((item) => ({ Available: 1, Reserved: 2, Sold: 3 })[item])
-        .join(""),
-      Bathroomcount: unitFilters.bathrooms.join(""),
-      Bedroomcount: unitFilters.bedrooms.join(""),
-      Budget: unitFilters.budget,
-      Surface: unitFilters.surface,
-    });
-  }, [emit, unitFilters, unitPanelMode]);
+    scheduleUnitFilterDescriptor();
+  }, [scheduleUnitFilterDescriptor, unitPanelMode]);
+
+  useEffect(() => {
+    const response = (tourState.rawResponse ?? "").toLowerCase();
+    if (!response.includes("explorerlevel")) return;
+
+    initializeDayMood();
+    if (activeSection === "Units") {
+      scheduleUnitFilterDescriptor();
+    }
+  }, [activeSection, initializeDayMood, scheduleUnitFilterDescriptor, tourState.rawResponse]);
+
+  useEffect(
+    () => () => {
+      unitFilterTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (
@@ -452,13 +597,68 @@ export function InteriorEditorPage() {
     };
   }, [handleResponse]);
 
+  const handleExplorerGuidedTourStep = useCallback(
+    (step: GuidedTourStep) => {
+      if (["explorer-scene", "top-navigation"].includes(step.id)) {
+        handleResponse("explorer");
+        setActiveSection("Home");
+        setUnitPanelMode("overview");
+        setIsPreviewOpen(false);
+        return;
+      }
+
+      if (step.id === "unit-filters") {
+        handleResponse("explorer");
+        setActiveSection("Units");
+        setUnitPanelMode("filters");
+        setIsPreviewOpen(false);
+        return;
+      }
+
+      if (step.id === "mood-controls") {
+        handleResponse("explorer");
+        setIsPreviewOpen(false);
+        return;
+      }
+
+      if (step.id === "preview-layers") {
+        setIsPreviewOpen(true);
+        return;
+      }
+
+    },
+    [handleResponse],
+  );
+
+  const handleApartmentGuidedTourStep = useCallback(
+    (step: GuidedTourStep) => {
+      if (["apartment-stream", "journey-switch", "movement-controls", "apartment-mood-controls"].includes(step.id)) {
+        handleResponse("tour");
+        setActiveJourney("Explore");
+        setIsPreviewOpen(false);
+        return;
+      }
+
+      if (["customize-controls", "look-actions"].includes(step.id)) {
+        handleResponse("tour");
+        setActiveJourney("Customize");
+        setIsPreviewOpen(false);
+      }
+    },
+    [handleResponse],
+  );
+
   return (
     <div
       className={`tour-page ${currentScreen === "explorer" ? "is-explorer" : "is-tour"}`}
       style={{ "--scene-image": `url(${interiorImage})` } as CSSProperties}
     >
       <div className="tour-scene" aria-hidden="true" />
-      <ArcwarePixelStream className="pixel-stream-layer" onResponse={handleResponse} />
+      <ArcwarePixelStream
+        className="pixel-stream-layer"
+        onReady={initializeDayMood}
+        onResponse={handleUnrealResponse}
+      />
       <div className="mobile-orientation-notice" role="status">
         <div className="phone-rotate-icon" aria-hidden="true" />
         <strong>Rotate your phone</strong>
@@ -468,13 +668,13 @@ export function InteriorEditorPage() {
         <TourTopbar activeSection={activeSection} onNavigate={navigateTour} />
       ) : null}
 
-      <div className={`preview-settings ${isPreviewOpen ? "is-open" : ""}`}>
+      <div className={`preview-settings ${isPreviewOpen ? "is-open" : ""}`} data-tour="preview-layers">
         <div className="top-action-row">
           {isTourScreen ? (
             <button
               className="back-explorer-button"
               onClick={() => {
-                emit("explorer");
+                emit("LevelBack");
                 handleResponse("explorer");
               }}
               type="button"
@@ -512,7 +712,7 @@ export function InteriorEditorPage() {
       </div>
 
       {isTourScreen ? (
-        <div className="tour-journey-switch" aria-label="Tour mode">
+        <div className="tour-journey-switch" aria-label="Tour mode" data-tour="journey-switch">
           {journeySteps.map((step, index) => (
             <button
               className={`journey-step ${step === activeJourney ? "is-active" : ""}`}
@@ -552,7 +752,12 @@ export function InteriorEditorPage() {
             ) : null}
 
             {unitPanelMode === "filters" ? (
-              <GlassPanel kicker="Unit Search" title="Filter Units" className="unit-filter-panel">
+              <GlassPanel
+                kicker="Unit Search"
+                title="Filter Units"
+                className="unit-filter-panel"
+                data-tour="unit-filters"
+              >
                 <div className="filter-control">
                   <div className="filter-label">
                     <span>Surface</span>
@@ -720,7 +925,7 @@ export function InteriorEditorPage() {
               </GlassPanel>
             ) : null}
 
-            <GlassPanel kicker="Space Mood" title={mood}>
+            <GlassPanel kicker="Space Mood" title={mood} data-tour="mood-controls">
               <div className="mood-grid">
                 {moods.map((option) => (
                   <button
@@ -764,7 +969,7 @@ export function InteriorEditorPage() {
           </div>
         ) : (
           <div className="hud-column">
-            <GlassPanel kicker="Space Mood" title={mood}>
+            <GlassPanel kicker="Space Mood" title={mood} data-tour="mood-controls">
               <div className="mood-grid">
                 {moods.map((option) => (
                   <button
@@ -813,7 +1018,7 @@ export function InteriorEditorPage() {
                   copy={tourState.canInteract ? "Interactive surface detected." : "Viewport ready for guided customization."}
                 />
 
-              <GlassPanel kicker="Customize Furniture" title={selectedMesh}>
+              <GlassPanel kicker="Customize Furniture" title={selectedMesh} data-tour="customize-controls">
                 <div className="mesh-list">
                   {editableMeshes.map((mesh) => (
                     <button
@@ -861,7 +1066,7 @@ export function InteriorEditorPage() {
       </div>
 
       {isTourScreen ? (
-        <aside className="movement-guide" aria-label="Movement guide">
+        <aside className="movement-guide" aria-label="Movement guide" data-tour="movement-controls">
           <div className="key-cluster" aria-hidden="true">
             <span>W</span>
             <span>A</span>
@@ -878,7 +1083,11 @@ export function InteriorEditorPage() {
 
       {isTourScreen ? (
         <>
-          <aside className={`look-action-panel ${isPreviewOpen || isMobilePanelOpen ? "is-mobile-hidden" : ""}`} aria-label="Look actions">
+          <aside
+            className={`look-action-panel ${isPreviewOpen || isMobilePanelOpen ? "is-mobile-hidden" : ""}`}
+            aria-label="Look actions"
+            data-tour="look-actions"
+          >
             <button className="save-look-button" onClick={saveLook} type="button">
               <span>Save Look</span>
               <span className="bookmark-icon" aria-hidden="true" />
@@ -931,6 +1140,22 @@ export function InteriorEditorPage() {
             </button>
           </div>
         </>
+      ) : null}
+      {currentScreen === "explorer" ? (
+        <GuidedTour
+          launcherLabel="Explorer Guide"
+          steps={explorerGuidedTourSteps}
+          storageKey="homw:guided-tour-explorer-complete"
+          onStepChange={handleExplorerGuidedTourStep}
+        />
+      ) : null}
+      {isTourScreen ? (
+        <GuidedTour
+          launcherLabel="Apartment Guide"
+          steps={apartmentGuidedTourSteps}
+          storageKey="homw:guided-tour-apartment-complete"
+          onStepChange={handleApartmentGuidedTourStep}
+        />
       ) : null}
     </div>
   );

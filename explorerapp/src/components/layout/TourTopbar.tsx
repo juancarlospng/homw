@@ -16,7 +16,7 @@ export function TourTopbar({ activeSection = "Home", onNavigate }: TourTopbarPro
       <div className="brand-lockup">
         <img className="brand-logo" src="./logohomw.png" alt="HOMW" />
       </div>
-      <nav aria-label="Tour sections" className="tour-tabs">
+      <nav aria-label="Tour sections" className="tour-tabs" data-tour="top-navigation">
         {tabs.map((tab) => (
           <button
             className={`tour-tab ${tab.label === activeSection ? "is-active" : ""}`}

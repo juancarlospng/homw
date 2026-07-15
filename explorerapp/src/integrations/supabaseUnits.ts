@@ -82,13 +82,19 @@ function normalizeSearchValue(value: unknown) {
   return String(value).toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function getNumericSearchValue(value: unknown) {
+function getUnitNumber(value: unknown) {
   if (typeof value !== "string" && typeof value !== "number") return "";
-  return String(value).replace(/\D/g, "");
+  const stringValue = String(value).trim();
+  const unitMatch = stringValue.match(/\bUnit[\s:_#-]*(\d+)\b/i);
+  if (unitMatch) return unitMatch[1];
+  if (/^\d+$/.test(stringValue)) return stringValue;
+
+  const standaloneNumber = stringValue.match(/(?:^|\D)(\d+)(?:\D|$)/);
+  return standaloneNumber?.[1] ?? "";
 }
 
 function getUnitRowNameFilterValue(identifier: string) {
-  return getNumericSearchValue(identifier) || identifier.trim();
+  return getUnitNumber(identifier) || identifier.trim();
 }
 
 function getSupabaseToken() {
@@ -230,11 +236,12 @@ export async function fetchUnitsFromSupabase() {
 export async function fetchUnitByRowNameFromSupabase(identifier: string) {
   const table = getUnitsTable();
   const rowName = getUnitRowNameFilterValue(identifier);
-  const params = new URLSearchParams({
-    select: "*",
-    [UNIT_ROW_NAME_COLUMN]: `eq.${rowName}`,
-  });
-  const url = `${SUPABASE_BASE_URL}/${encodeURIComponent(table)}?${params.toString()}`;
+  const params = [
+    "select=*",
+    `${encodeURIComponent(UNIT_ROW_NAME_COLUMN)}=eq.${encodeURIComponent(rowName)}`,
+    "limit=1",
+  ].join("&");
+  const url = `${SUPABASE_BASE_URL}/${encodeURIComponent(table)}?${params}`;
   console.info("[HOMW Supabase] Unit detail query", url);
 
   const response = await fetch(url, { headers: getSupabaseHeaders(), cache: "no-store" });
@@ -244,12 +251,13 @@ export async function fetchUnitByRowNameFromSupabase(identifier: string) {
   }
 
   const data = (await response.json()) as Record<string, unknown>[];
-  return data[0] ? normalizeUnit(data[0], 0) : undefined;
+  const unit = data[0] ? normalizeUnit(data[0], 0) : undefined;
+  return unit && findUnitByIdentifier([unit], identifier) ? unit : undefined;
 }
 
 export function findUnitByIdentifier(units: UnitRecord[], identifier: string) {
   const normalizedIdentifier = normalizeSearchValue(identifier);
-  const numericIdentifier = getNumericSearchValue(identifier);
+  const numericIdentifier = getUnitNumber(identifier);
 
   if (!normalizedIdentifier && !numericIdentifier) return undefined;
 
@@ -271,7 +279,7 @@ export function findUnitByIdentifier(units: UnitRecord[], identifier: string) {
 
     return values.some((value) => {
       const normalizedValue = normalizeSearchValue(value);
-      const numericValue = getNumericSearchValue(value);
+      const numericValue = getUnitNumber(value);
 
       return (
         normalizedValue === normalizedIdentifier ||

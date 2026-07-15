@@ -16,11 +16,25 @@ function getInitialState(): UnrealTourState {
     normalizedView === "liveit" ||
     normalizedView === "live-it";
 
+  const startsInExplorer =
+    normalizedView === "explorer" ||
+    normalizedView === "home" ||
+    normalizedView === "amenities" ||
+    normalizedView === "surroundings" ||
+    normalizedView === "units";
+
   return {
-    mode: startsInTour ? "apartment" : "explorer",
+    mode: startsInTour && !startsInExplorer ? "apartment" : "explorer",
     canInteract: false,
     availability: "Available",
   };
+}
+
+function syncSceneHash(mode: UnrealTourState["mode"]) {
+  const nextHash = mode === "explorer" ? "#explorer" : "#apartment";
+  if (window.location.hash === nextHash) return;
+
+  window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${nextHash}`);
 }
 
 export function useUnrealBridge() {
@@ -45,6 +59,10 @@ export function useUnrealBridge() {
       }
     };
   }, [handleResponse]);
+
+  useEffect(() => {
+    syncSceneHash(tourState.mode);
+  }, [tourState.mode]);
 
   return { emit, tourState, handleResponse };
 }

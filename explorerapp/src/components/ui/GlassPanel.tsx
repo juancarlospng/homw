@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
-type GlassPanelProps = {
+type GlassPanelProps = ComponentPropsWithoutRef<"section"> & {
   kicker?: string;
   title?: string;
   copy?: string;
@@ -8,9 +8,9 @@ type GlassPanelProps = {
   className?: string;
 };
 
-export function GlassPanel({ kicker, title, copy, children, className = "" }: GlassPanelProps) {
+export function GlassPanel({ kicker, title, copy, children, className = "", ...props }: GlassPanelProps) {
   return (
-    <section className={`glass-panel ${className}`.trim()}>
+    <section className={`glass-panel ${className}`.trim()} {...props}>
       <div className="panel-inner">
         {kicker ? <p className="panel-kicker">{kicker}</p> : null}
         {title ? <h2 className="panel-title">{title}</h2> : null}

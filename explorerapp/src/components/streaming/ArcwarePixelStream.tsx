@@ -34,6 +34,9 @@ const ARCWARE_CLIENT_URL = "https://unpkg.com/@arcware/webrtc-plugin@latest/inde
 const STREAM_START_TIMEOUT_MS = 70000;
 const STREAM_RETRY_DELAY_MS = 5000;
 const STREAM_MAX_RETRIES = 4;
+const STREAM_RELOAD_LIMIT = 2;
+const STREAM_RELOAD_WINDOW_MS = 180000;
+const STREAM_RELOAD_STORAGE_KEY = "homw:arcware-stream-reloads";
 
 const ARCWARE_CONFIG = {
   address: "wss://signalling-client.ragnarok.arcware.cloud/",
@@ -87,6 +90,61 @@ function clearStreamContainer(containerId: string) {
   if (container) container.replaceChildren();
 }
 
+function stringifyConsoleArg(value: unknown) {
+  if (typeof value === "string") return value;
+  if (value instanceof Error) return `${value.name} ${value.message}`;
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function isRecoverableArcwareError(...values: unknown[]) {
+  const message = values.map(stringifyConsoleArg).join(" ").toLowerCase();
+
+  return (
+    message.includes("maximum concurrency reached") ||
+    message.includes("failed to allocate runner resources") ||
+    message.includes("ws closed: 4501") ||
+    message.includes('"code":4501') ||
+    message.includes("code: 4501")
+  );
+}
+
+function canReloadStreamPage() {
+  const now = Date.now();
+
+  try {
+    const state = JSON.parse(window.sessionStorage.getItem(STREAM_RELOAD_STORAGE_KEY) ?? "null") as
+      | { count: number; startedAt: number }
+      | null;
+    const current =
+      state && now - state.startedAt < STREAM_RELOAD_WINDOW_MS
+        ? state
+        : { count: 0, startedAt: now };
+
+    if (current.count >= STREAM_RELOAD_LIMIT) return false;
+
+    window.sessionStorage.setItem(
+      STREAM_RELOAD_STORAGE_KEY,
+      JSON.stringify({ count: current.count + 1, startedAt: current.startedAt }),
+    );
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+function resetStreamReloadGuard() {
+  try {
+    window.sessionStorage.removeItem(STREAM_RELOAD_STORAGE_KEY);
+  } catch {
+    // Reload recovery is best effort only.
+  }
+}
+
 export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePixelStreamProps) {
   const reactId = useId();
   const containerId = useMemo(() => `arcware-stream-${reactId.replace(/:/g, "")}`, [reactId]);
@@ -108,12 +166,28 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
     let mediaObserver: MutationObserver | undefined;
     let retryTimer: number | undefined;
     let startTimer: number | undefined;
+    let reloadTimer: number | undefined;
     let retryCount = 0;
     const mediaReadyCleanups: Array<() => void> = [];
+
+    const reloadPageForStreamRecovery = (...values: unknown[]) => {
+      if (cancelled || !isRecoverableArcwareError(...values)) return;
+      if (!canReloadStreamPage()) {
+        setStatus("error");
+        return;
+      }
+
+      cleanupStream();
+      setStatus("retrying");
+      reloadTimer = window.setTimeout(() => {
+        window.location.reload();
+      }, 750);
+    };
 
     const markReady = () => {
       if (cancelled || ready) return;
       ready = true;
+      resetStreamReloadGuard();
       if (startTimer) window.clearTimeout(startTimer);
       setStatus("ready");
       onReadyRef.current?.();
@@ -128,6 +202,30 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
       emitterRef.current = undefined;
       clearStreamContainer(containerId);
     };
+
+    const originalConsoleWarn = console.warn;
+    const originalConsoleError = console.error;
+    const patchedConsoleWarn = (...values: unknown[]) => {
+      originalConsoleWarn(...values);
+      reloadPageForStreamRecovery(...values);
+    };
+    const patchedConsoleError = (...values: unknown[]) => {
+      originalConsoleError(...values);
+      reloadPageForStreamRecovery(...values);
+    };
+    console.warn = patchedConsoleWarn;
+    console.error = patchedConsoleError;
+
+    const onWindowError = (event: ErrorEvent) => {
+      reloadPageForStreamRecovery(event.message, event.error);
+    };
+
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      reloadPageForStreamRecovery(event.reason);
+    };
+
+    window.addEventListener("error", onWindowError);
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
 
     const scheduleRetry = () => {
       if (cancelled || ready) return;
@@ -223,6 +321,7 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
         startTimer = window.setTimeout(scheduleRetry, STREAM_START_TIMEOUT_MS);
       } catch (error) {
         console.error("[HOMW Pixel Streaming]", error);
+        reloadPageForStreamRecovery(error);
         scheduleRetry();
       }
     }
@@ -239,6 +338,15 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
       }
       if (retryTimer) window.clearTimeout(retryTimer);
       if (startTimer) window.clearTimeout(startTimer);
+      if (reloadTimer) window.clearTimeout(reloadTimer);
+      if (console.warn === patchedConsoleWarn) {
+        console.warn = originalConsoleWarn;
+      }
+      if (console.error === patchedConsoleError) {
+        console.error = originalConsoleError;
+      }
+      window.removeEventListener("error", onWindowError);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
       cleanupStream();
     };
   }, [containerId, streamingEnabled]);
@@ -248,7 +356,7 @@ export function ArcwarePixelStream({ className, onReady, onResponse }: ArcwarePi
   }
 
   return (
-    <div className={className}>
+    <div className={className} data-tour="live-stream">
       <div className="pixel-stream-container" id={containerId} />
       {status !== "ready" ? (
         <div className={`pixel-stream-status is-${status}`}>
